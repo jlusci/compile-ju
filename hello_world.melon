@@ -1,0 +1,6 @@
+program Hello
+	function main
+		var x is string This is a string
+		print var x
+	end
+end

@@ -1,0 +1,6 @@
+class Mytestclass():
+	var x = 5
+	def func():
+		something
+	end function
+end class
