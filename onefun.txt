@@ -9,6 +9,11 @@ function second() {
 
 function third() {
 	var p = string;
+	if ( p < 10 ) {
+	evaluate this thing;
+	} else {
+	maybe do this instead?;
+	}
 }
 
 function main() {

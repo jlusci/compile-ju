@@ -57,13 +57,13 @@ def parse_statement():
                 print "THIS FUNCTION CALLS THE FUNCTION:", token
                 return {"name": token,
                         "type": "function call"}
-            else:
-                # if index == len(stmtlist):
-                    token = tokens.pop(0)
-                    return token
-        # # raise Exception("WTF THAT IS NOT A KEYWORD")
-        #         token = tokens.pop(0)
-        #         return token
+            # else:
+            #     # if index == len(stmtlist):
+            #     token = tokens.pop(0)
+            #     return token
+        raise Exception("WTF ", tokens[0], "IS NOT A KEYWORD")
+        token = tokens.pop(0)
+        return token
 
 def parse_variable_def():
     contents = []
@@ -119,7 +119,37 @@ def parse_variable_def():
 #     return x
 
 def parse_if():
-    pass
+    test = []
+    conseq = []
+    alt = []
+    dictcontents = {}
+    expect("if")
+    expect("(")
+    while tokens[0] != ")":
+        test.append(tokens[0])
+        tokens.pop(0)
+    expect(")")
+    expect("{")
+    while tokens[0] != ";":
+        conseq.append(tokens[0])
+        tokens.pop(0)
+    expect(";")
+    expect("}")
+    if tokens[0] == "else":
+        expect("else")
+        expect("{")
+        while tokens[0] != ";":
+            alt.append(tokens[0])
+            tokens.pop(0)
+        expect(";")
+        expect("}")
+    
+    return {"type": "if",
+            "test": test,
+            "conseq": conseq,
+            "alt": alt}
+
+
 
 def parse_string():
     name_words = []
