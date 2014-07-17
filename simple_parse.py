@@ -6,7 +6,7 @@ ENV['functions'] = []
 def expect(thing_to_expect):
     token = tokens.pop(0)
     if token != thing_to_expect:
-        raise Exception("Your program is bad and you should feel bad")
+        raise Exception("Wrong token! Expected: ", thing_to_expect, "and got: ", token)
     return token
 
 def parse_function():
@@ -45,8 +45,8 @@ def parse_statement():
     # index = 0
     if tokens[0] == "var":
         return parse_variable_def()
-    # elif tokens[0] == "for":
-    #     return parse_for()
+    elif tokens[0] == "for":
+        return parse_for()
     elif tokens[0] == "if":
         return parse_if()
     else:
@@ -101,22 +101,37 @@ def parse_variable_def():
             "val": val,
             "type": "assign"}
 
-# def parse_for():
-#     contents = []
-#     expect("for")
-#     expect("(")
-#     while tokens[0] != ")":
-#         contents.append(tokens[0])
-#         tokens.pop(0)
-#     tokens.pop(0)
-#     contents = " ".join(contents)
-#     contents = contents.split(';')
-#     var_def = contents[0]
-#     condition = contents[1]
-#     incr = contents[2]
-#     x = (var_def, condition, incr)
-#     print x
-#     return x
+def parse_for():
+    var_init = []
+    cond = []
+    incr = []
+    block = []
+    expect("for")
+    expect("(")
+    while tokens[0] != ";":
+        var_init.append(tokens[0])
+        tokens.pop(0)
+    expect(";")
+    while tokens[0] != ";":
+        cond.append(tokens[0])
+        tokens.pop(0)
+    expect(";")
+    while tokens[0] != ")":
+        incr.append(tokens[0])
+        tokens.pop(0)
+    expect(")")
+    expect("{")
+    while tokens[0] != ";":
+        block.append(tokens[0])
+        tokens.pop(0)
+    expect(";")
+    expect("}")
+
+    return {"type": "for",
+            "var_init": var_init,
+            "cond": cond,
+            "incr": incr,
+            "block": block}
 
 def parse_if():
     test = []
