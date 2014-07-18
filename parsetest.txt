@@ -1,0 +1,28 @@
+function first ( ) {
+	var k = [ 1 , 2 , 3 ];
+	var m = { key : value , key2 : value2 };
+	for ( var x = 0; x < 10; x++ ) {
+		print x;
+	}
+}
+
+function second ( ) {
+	var x = 100;
+}
+
+function third ( ) {
+	var p = 7;
+	if ( p < 10 ) {
+	evaluate this thing;
+	} else {
+	maybe do this instead?;
+	}
+}
+
+function main ( ) {
+	var i = my string;
+	third();
+	second();
+	var j = 7;
+	first();
+}

@@ -1,3 +1,5 @@
+import sys
+
 tokens = []
 
 ENV = {}
@@ -175,11 +177,11 @@ def parse_string():
     return " ".join(name_words)
 
 def main():
-    f = open("onefun.txt")
+    global tokens
+    f = open(sys.argv[1])
     lines = f.read()
     f.close()
     print lines
-    global tokens
     tokens = lines.replace(';',' ; ').split()
     print tokens
 
