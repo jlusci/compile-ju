@@ -1,0 +1,16 @@
+function fortest ( ) {
+	var i = 10;
+	var k = 1111;
+	var l = 'this is my string';
+	var m = { key1 : value1 , key2 : value2 };
+	for ( var x = 0; x < 10; x = x + 1 ) {
+		print x;
+	}
+}
+
+function main ( ) {
+	if ( x > 10 ) {
+	do something;
+	}
+	fortest();
+}
