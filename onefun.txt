@@ -1,16 +1,16 @@
-function first() {
+function first ( ) {
 	var k = [ 1 , 2 , 3 ];
 	var m = { key : value , key2 : value2 };
-	for ( x = 0; x < 10; x++ ) {
+	for ( x = 0; x < 10; x = x + 1 ) {
 		print x;
 	}
 }
 
-function second() {
+function second ( ) {
 	var x = 100;
 }
 
-function third() {
+function third ( ) {
 	var p = string;
 	if ( p < 10 ) {
 	evaluate this thing;
@@ -19,7 +19,7 @@ function third() {
 	}
 }
 
-function main() {
+function main ( ) {
 	var i = my string;
 	third();
 	second();
