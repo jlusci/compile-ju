@@ -123,48 +123,57 @@ def parse_variable_def():
                 "val": val}}
 
 def parse_for():
-    var_init = []
-    cond = []
-    incr = []
     block = []
-    n1 = {}
-    n2 = {}
-    n3 = {}
-    # n4 = {}
     expect("for")
     expect("(")
-    while tokens[0] != ";":
-        if tokens[0] == 'var':
-            tokens.pop(0)
-        var_init.append(atom(tokens[0]))
-        tokens.pop(0)
-    expect(";")
-    n1 = {"type": "assign_expr",
-        "left": {"type": "id_expr",
-        "name": var_init[0]},
-        "right": {"type": "int_const_expr",
-        "val": var_init[2]}}
-    while tokens[0] != ";":
-        cond.append(atom(tokens[0]))
-        tokens.pop(0)
-    expect(";")
-    n2 = {"type": cond[1],
-        "left": {"type": "id_expr",
-        "name": cond[0]},
-        "right": {"type": "int_const_expr",
-        "val": cond[2]}}
-    while tokens[0] != ")":
-        incr.append(atom(tokens[0]))
-        tokens.pop(0)
-    expect(")")
-    n3 = {"type": "incr",
-            "name": incr}
-    expect("{")
+    # n1 = {}
+    # n2 = {}
+    # n3 = {}
+    # # n4 = {}
+    # expect("for")
+    # expect("(")
+    # while tokens[0] != ";":
+    #     if tokens[0] == 'var':
+    #         tokens.pop(0)
+    #     var_init.append(atom(tokens[0]))
+    #     tokens.pop(0)
+    # expect(";")
+    # n1 = {"type": "assign_expr",
+    #     "left": {"type": "id_expr",
+    #     "name": var_init[0]},
+    #     "right": {"type": "int_const_expr",
+    #     "val": var_init[2]}}
+
+    n1 = parse_expression(tokens)
+    n2 = parse_expression(tokens)
+    n3 = parse_expression(tokens)
+
+    # while tokens[0] != ";":
+    #     cond.append(atom(tokens[0]))
+    #     tokens.pop(0)
+    # expect(";")
+    # n2 = {"type": cond[1],
+    #     "left": {"type": "id_expr",
+    #     "name": cond[0]},
+    #     "right": {"type": "int_const_expr",
+    #     "val": cond[2]}}
+    # while tokens[0] != ")":
+    #     incr.append(atom(tokens[0]))
+    #     tokens.pop(0)
+    # expect(")")
+    # n3 = {"type": "incr",
+    #         "name": incr}
+    # expect("{")
     while tokens[0] != ";":
         block.append(atom(tokens[0]))
         tokens.pop(0)
     expect(";")
     expect("}")
+    test = {"type": "for",
+            "first": n1,
+            "second": n2,
+            "third": n3,
+            "block": block}
 
     return {"type": "for",
             "first": n1,
@@ -173,16 +182,11 @@ def parse_for():
             "block": block}
 
 def parse_if():
-    test = []
     conseq = []
     alt = []
     expect("if")
     expect("(")
-    while tokens[0] != ")":
-        test.append(atom(tokens[0]))
-        tokens.pop(0)
-    expect(")")
-    expect("{")
+    n1 = parse_expression(tokens)
     while tokens[0] != ";":
         conseq.append(atom(tokens[0]))
         tokens.pop(0)
@@ -198,9 +202,9 @@ def parse_if():
         expect("}")
     
     return {"type": "if",
-            "test": test,
-            "conseq": conseq,
-            "alt": alt}
+            "first": n1,
+            "second": conseq,
+            "third": alt}
 
 def parse_var():
     contents = []
@@ -208,6 +212,47 @@ def parse_var():
         contents.append(tokens.pop(0))
  
     return " ".join(contents)
+
+def parse_expression(tokens):
+    var_init = []
+    contents = [] 
+    print tokens       
+    if tokens[0] == 'var':                      #var definition inside statement
+        tokens.pop(0)
+        while tokens[0] != ";":
+            var_init.append(atom(tokens[0]))
+            tokens.pop(0)
+        expect(";")
+        return {"type": "assign_expr",
+            "left": {"type": "id_expr",
+            "name": var_init[0]},
+            "right": {"type": "int_const_expr",
+            "val": var_init[2]}}
+    else:
+        while tokens[0] != ";" and tokens[0] != ")":
+                contents.append(atom(tokens[0]))
+                tokens.pop(0)
+        # expect(";")
+        tokens.pop(0)
+        if len(contents) == 3:                  #simple comparison
+            return {"type": contents[1],
+                    "left": {"type": "id_expr",
+                    "name": contents[0]},
+                    "right": {"type": "int_const_expr",
+                    "val": contents[2]}}
+        elif len(contents) == 5:                #doing some operation
+            # tokens.pop(0)
+            expect("{")
+            # tokens.pop(0)
+            rightn = {"type": contents[3],
+                    "left": {"type": "id_expr",
+                    "name": contents[2]},
+                    "right": {"type": "int_const_expr",
+                    "name": contents[4]}}
+            return {"type": contents[1],
+                    "left": {"type": "id_expr",
+                    "name": contents[0]},
+                    "right": rightn}      
 
 def atom(var):
     try: return int(var)
