@@ -143,8 +143,8 @@ while True:
     # print tok.type, tok.value, tok.lineno, tok.lexpos
     tokenlist.append(tok)
     # print tok, type(tok)
-token = tokenlist[-1].value
-print tokenlist, len(tokenlist), tokenlist[-1], "HERE IS THE LAST TOKEN:", token
+
+
 
 # lex.py comes with a simple main function - use this to get tuples list
 # if __name__ == '__main__':
