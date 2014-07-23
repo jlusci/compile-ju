@@ -210,17 +210,13 @@ def parse_if():
             "second": conseq,
             "third": alt}
 
-def parse_var():
+def parse_str():
     contents = []
     while tokens[0].value != ";":
-        if type(tokens[0].value) == int:
-            token = tokens.pop(0)
-            token = token.value
-            return token
-        else:
-            token = tokens.pop(0)
-            token = token.value
-            contents.append(token)
+        token = tokens.pop(0)
+        token = token.value
+        contents.append(token)
+ 
     return " ".join(contents)
 
 def parse_expression():
