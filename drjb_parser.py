@@ -5,6 +5,8 @@ import ply.lex as lex
 
 # tokens = []
 
+symbol_table = ['+','-','/','*','%']
+
 ENV = {}
 
 def expect(thing_to_expect):
@@ -68,15 +70,13 @@ def parse_statement():
                     "type": "function call"}
         raise Exception("WTF ", tokens[0].value, "IS NOT A KEYWORD. Error on line:",
             tokens[0].lineno)
-        # token = tokens.pop(0)
-        # token = token.value
-        # return token
 
 def parse_variable_def():
     contents = []
     dictcontents = {}
     expect("var")
-    token = tokens.pop(0)
+    # token = tokens.pop(0)
+    token = parse_id()
     var_name = token.value
     expect("=")
 
@@ -91,9 +91,9 @@ def parse_variable_def():
         val = contents
         expect(";")
         return {"type": "assign_expr",
-                "left": {"type": "id_expr",
-                        "name": var_name},
-                "right": {"type": "list_expr",
+                "first": {"type": "id_expr",
+                        "val": var_name},
+                "second": {"type": "list_expr",
                         "val": val}}
     elif tokens[0].value == "{":
         expect("{")
@@ -109,75 +109,67 @@ def parse_variable_def():
         val = dictcontents
         expect(";")
         return {"type": "assign_expr",
-                "left": {"type": "id_expr",
-                        "name": var_name},
-                "right": {"type": "dict_expr",
+                "first": {"type": "id_expr",
+                        "val": var_name},
+                "second": {"type": "dict_expr",
                         "val": val}}
-    else:
-        val = parse_var()
-        val = atom(val)
+    
+    elif type(atom(tokens[0].value)) == str and tokens[0].value != "(":
+        val = parse_str()
         expect(";")
-
-    # print "VARIABLE %s is %s"%(var_name, val)
-
-        if type(val) == int:
-            return {"type": "assign_expr",
-                    "left": {"type": "id_expr",
-                            "name": var_name},
-                    "right": {"type": "int_const_expr",
+        return {"type": "assign_expr",
+                    "first": {"type": "id_expr",
+                            "val": var_name},
+                    "second": {"type": "str_const_expr",
                             "val": val}}
-        elif type(val) == str:
-            return {"type": "assign_expr",
-                    "left": {"type": "id_expr",
-                            "name": var_name},
-                    "right": {"type": "str_const_expr",
+    else:
+        val = parse_math_expression()
+        expect(";")
+        return {"type": "assign_expr",
+                    "first": {"type": "id_expr",
+                            "val": var_name},
+                    "second": {"type": "eval_expr",
                             "val": val}}
 
 # EXPR : FACTOR { ('+' | '-') EXPR } ;
 # FACTOR : INT | '(' EXPR ')' ;
 
+def parse_math_expression():
+    x = parse_factor()
+    if tokens[0].value in symbol_table:
+    # if tokens[0].value == '+' or tokens[0].value == '-':
+        operator = tokens.pop(0)
+        operator = operator.value
+        y = parse_math_expression()
+        
+        return {"type": "op_expr",
+                "val": operator,
+                "first": {"type": "int_const_expr",
+                        "val": x},
+                "second": {"type": "int_const_expr",
+                        "val": y}}
+    return x
+
+def parse_factor():
+    token = tokens[0].value
+    token = atom(token)
+    if type(token) == int:
+        tokens.pop(0)
+        return token
+    expect("(")  
+    expr = parse_math_expression()
+    expect(")")
+    return expr 
+
 def parse_for():
     block = []
     expect("for")
     expect("(")
-    # n1 = {}
-    # n2 = {}
-    # n3 = {}
-    # # n4 = {}
-    # expect("for")
-    # expect("(")
-    # while tokens[0].value != ";":
-    #     if tokens[0].value == 'var':
-    #         tokens.pop(0)
-    #     var_init.append(atom(tokens[0].value))
-    #     tokens.pop(0)
-    # expect(";")
-    # n1 = {"type": "assign_expr",
-    #     "left": {"type": "id_expr",
-    #     "name": var_init[0]},
-    #     "right": {"type": "int_const_expr",
-    #     "val": var_init[2]}}
 
-    n1 = parse_expression(tokens)
-    n2 = parse_expression(tokens)
-    n3 = parse_expression(tokens)
+    n1 = parse_expression()
+    n2 = parse_expression()
+    n3 = parse_expression()
 
-    # while tokens[0].value != ";":
-    #     cond.append(atom(tokens[0].value))
-    #     tokens.pop(0)
-    # expect(";")
-    # n2 = {"type": cond[1],
-    #     "left": {"type": "id_expr",
-    #     "name": cond[0]},
-    #     "right": {"type": "int_const_expr",
-    #     "val": cond[2]}}
-    # while tokens[0].value != ")":
-    #     incr.append(atom(tokens[0].value))
-    #     tokens.pop(0)
-    # expect(")")
-    # n3 = {"type": "incr",
-    #         "name": incr}
-    # expect("{")
     while tokens[0].value != ";":
         block.append(atom(tokens[0].value))
         tokens.pop(0)
@@ -195,7 +187,10 @@ def parse_if():
     alt = []
     expect("if")
     expect("(")
-    n1 = parse_expression(tokens)
+
+    n1 = parse_expression()
+    expect("{")
+
     while tokens[0].value != ";":
         conseq.append(atom(tokens[0].value))
         tokens.pop(0)
@@ -228,10 +223,10 @@ def parse_var():
             contents.append(token)
     return " ".join(contents)
 
-def parse_expression(tokens):
+def parse_expression():
     var_init = []
     contents = [] 
-    # print tokens       
+
     if tokens[0].value == 'var':                      #var definition inside statement
         tokens.pop(0)
         while tokens[0].value != ";":
@@ -239,9 +234,9 @@ def parse_expression(tokens):
             tokens.pop(0)
         expect(";")
         return {"type": "assign_expr",
-                "left": {"type": "id_expr",
-                        "name": var_init[0]},
-                "right": {"type": "int_const_expr",
+                "first": {"type": "id_expr",
+                        "val": var_init[0]},
+                "second": {"type": "int_const_expr",
                         "val": var_init[2]}}
     else:
         while tokens[0].value != ";" and tokens[0].value != ")":
@@ -250,24 +245,27 @@ def parse_expression(tokens):
         # expect(";")
         tokens.pop(0)
         if len(contents) == 3:                  #simple comparison, ex x < 5
-            return {"type": contents[1],
-                    "left": {"type": "id_expr",
-                            "name": contents[0]},
-                    "right": {"type": "int_const_expr",
+            return {"type": "op_expr",
+                    "val": contents[1],
+                    "first": {"type": "id_expr",
+                            "val": contents[0]},
+                    "second": {"type": "int_const_expr",
                             "val": contents[2]}}
         elif len(contents) == 5:                #doing some operation, ex x = x + 1
             # tokens.pop(0)
             expect("{")
             # tokens.pop(0)
-            rightn = {"type": contents[3],
-                    "left": {"type": "id_expr",
-                            "name": contents[2]},
-                    "right": {"type": "int_const_expr",
-                            "name": contents[4]}}
-            return {"type": contents[1],
-                    "left": {"type": "id_expr",
-                            "name": contents[0]},
-                    "right": rightn}      
+            rightn = {"type": "op_expr",
+                    "val": contents[3],
+                    "first": {"type": "id_expr",
+                            "val": contents[2]},
+                    "second": {"type": "int_const_expr",
+                            "val": contents[4]}}
+            return {"type": "op_expr",
+                    "val": contents[1],
+                    "first": {"type": "id_expr",
+                            "val": contents[0]},
+                    "second": rightn}      
 
 def atom(var):
     try: return int(var)
