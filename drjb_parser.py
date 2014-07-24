@@ -9,6 +9,39 @@ symbol_table = ['+','-','/','*','%']
 
 ENV = {}
 
+class NodeTemplate(object):
+    pass
+
+class FunctionNode(NodeTemplate):
+    def __init__(self,name,args,body):
+        self.name = name
+        self.args = args
+        self.body = body
+
+class AssignNode(NodeTemplate):
+    def __init__(self,first,second):
+        self.first = first
+        self.second = second
+
+class OpNode(NodeTemplate):
+    def __init__(self,istype,first,second):
+        self.istype = istype
+        self.first = first
+        self.second = second
+
+class IfNode(NodeTemplate):
+    def __init__(self,first,second,third):
+        self.first = first
+        self.second = second
+        self.third = third
+
+class ForNode(NodeTemplate):
+    def __init__(self,first,second,third,block):
+        self.first = first
+        self.second = second
+        self.third = third
+        self.block = block
+
 def expect(thing_to_expect):
     token = tokens.pop(0)
     if token.value != thing_to_expect:
@@ -32,11 +65,13 @@ def parse_function():
         body.append(parse_statement())   #statments is a list of dictionaries
     expect("}")
 
+    fn_obj = FunctionNode(name,args,body)
     fn =  {"type": "function",
             "name": name,
             "args": args,
             "body": body}
 
+    # ENV[name] = fn_obj
     ENV[name] = fn
 
 def parse_id():
@@ -89,12 +124,7 @@ def parse_variable_def():
             tokens.pop(0)
         expect("]")
         val = contents
-        expect(";")
-        return {"type": "assign_expr",
-                "first": {"type": "id_expr",
-                        "val": var_name},
-                "second": {"type": "list_expr",
-                        "val": val}}
+
     elif tokens[0].value == "{":
         expect("{")
         while tokens[0].value != "}":
@@ -107,29 +137,20 @@ def parse_variable_def():
             tokens.pop(0)
         expect("}")
         val = dictcontents
-        expect(";")
-        return {"type": "assign_expr",
-                "first": {"type": "id_expr",
-                        "val": var_name},
-                "second": {"type": "dict_expr",
-                        "val": val}}
     
     elif type(atom(tokens[0].value)) == str and tokens[0].value != "(":
         val = parse_str()
-        expect(";")
-        return {"type": "assign_expr",
-                    "first": {"type": "id_expr",
-                            "val": var_name},
-                    "second": {"type": "str_const_expr",
-                            "val": val}}
+
     else:
         val = parse_math_expression()
-        expect(";")
-        return {"type": "assign_expr",
-                    "first": {"type": "id_expr",
-                            "val": var_name},
-                    "second": {"type": "eval_expr",
-                            "val": val}}
+    
+    expect(";")
+    assign_obj = AssignNode(var_name,val)
+    return {"type": "assign_expr",
+                "first": {"type": "id_expr",
+                        "val": var_name},
+                "second": {"type": "eval_expr",
+                        "val": val}}
 
 # EXPR : FACTOR { ('+' | '-') EXPR } ;
 # FACTOR : INT | '(' EXPR ')' ;
@@ -142,6 +163,9 @@ def parse_math_expression():
         operator = operator.value
         y = parse_math_expression()
         
+        op_obj = OpNode(operator,x,y)
+        # return op_obj
+
         return {"type": "op_expr",
                 "val": operator,
                 "first": {"type": "int_const_expr",
@@ -204,11 +228,14 @@ def parse_if():
             tokens.pop(0)
         expect(";")
         expect("}")
-    
-    return {"type": "if",
-            "first": n1,
-            "second": conseq,
-            "third": alt}
+
+    if_obj = IfNode(n1,conseq,alt)
+
+    return if_obj
+    # return {"type": "if",
+    #         "first": n1,
+    #         "second": conseq,
+    #         "third": alt}
 
 def parse_str():
     contents = []
@@ -223,7 +250,7 @@ def parse_expression():
     var_init = []
     contents = [] 
 
-    if tokens[0].value == 'var':                      #var definition inside statement
+    if tokens[0].value == 'var':                #var definition inside statement
         tokens.pop(0)
         while tokens[0].value != ";":
             var_init.append(atom(tokens[0].value))
@@ -257,7 +284,7 @@ def parse_expression():
                             "val": contents[2]},
                     "second": {"type": "int_const_expr",
                             "val": contents[4]}}
-            return {"type": "op_expr",
+            return {"type": "assign_expr",
                     "val": contents[1],
                     "first": {"type": "id_expr",
                             "val": contents[0]},
@@ -284,6 +311,6 @@ def main():
 
     parse_tokens()               
     print ENV
-    
+
 if __name__ == "__main__":
     main()
