@@ -22,6 +22,9 @@ class AssignNode(NodeTemplate):
     def __init__(self,first,second):
         self.first = first
         self.second = second
+        
+        def emit_assign_expr(self):
+            print self.first, "=", self.second
 
 class OpNode(NodeTemplate):
     def __init__(self,istype,first,second):
@@ -66,13 +69,13 @@ def parse_function():
     expect("}")
 
     fn_obj = FunctionNode(name,args,body)
-    fn =  {"type": "function",
-            "name": name,
-            "args": args,
-            "body": body}
+    # fn =  {"type": "function",
+    #         "name": name,
+    #         "args": args,
+    #         "body": body}
 
-    # ENV[name] = fn_obj
-    ENV[name] = fn
+    ENV[name] = fn_obj
+    # ENV[name] = fn
 
 def parse_id():
     return tokens.pop(0)
@@ -126,11 +129,13 @@ def parse_variable_def():
         val = parse_math_expression()    
     expect(";")
     assign_obj = AssignNode(var_name,val)
-    return {"type": "assign_expr",
-                "first": {"type": "id_expr",
-                        "val": var_name},
-                "second": {"type": "eval_expr",
-                        "val": val}}
+    # assign_obj.emit_assign_expr()
+    return assign_obj
+    # return {"type": "assign_expr",
+    #             "first": {"type": "id_expr",
+    #                     "val": var_name},
+    #             "second": {"type": "eval_expr",
+    #                     "val": val}}
 
 # EXPR : FACTOR { ('+' | '-') EXPR } ;
 # FACTOR : INT | '(' EXPR ')' ;
@@ -144,14 +149,15 @@ def parse_math_expression():
         y = parse_math_expression()
         
         op_obj = OpNode(operator,x,y)
-        # return op_obj
 
-        return {"type": "op_expr",
-                "val": operator,
-                "first": {"type": "int_const_expr",
-                        "val": x},
-                "second": {"type": "int_const_expr",
-                        "val": y}}
+        return op_obj
+
+        # return {"type": "op_expr",
+        #         "val": operator,
+        #         "first": {"type": "int_const_expr",
+        #                 "val": x},
+        #         "second": {"type": "int_const_expr",
+        #                 "val": y}}
     return x
 
 def parse_factor():
@@ -175,11 +181,14 @@ def parse_for():
     block = parse_statement()
     expect(";")
     expect("}")
-    return {"type": "for",
-            "first": n1,
-            "second": n2,
-            "third": n3,
-            "block": block}
+
+    for_obj = ForNode(n1,n2,n3,block)
+    return for_obj
+    # return {"type": "for",
+    #         "first": n1,
+    #         "second": n2,
+    #         "third": n3,
+    #         "block": block}
 
 def parse_if():
     conseq = []
@@ -201,11 +210,11 @@ def parse_if():
 
     if_obj = IfNode(n1,conseq,alt)
 
-    # return if_obj
-    return {"type": "if",
-            "first": n1,
-            "second": conseq,
-            "third": alt}
+    return if_obj
+    # return {"type": "if",
+    #         "first": n1,
+    #         "second": conseq,
+    #         "third": alt}
 
 def parse_expression():
     contents = [] 
