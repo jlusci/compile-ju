@@ -69,13 +69,13 @@ def parse_function():
     expect("}")
 
     fn_obj = FunctionNode(name,args,body)
-    # fn =  {"type": "function",
-    #         "name": name,
-    #         "args": args,
-    #         "body": body}
+    fn =  {"type": "function",
+            "name": name,
+            "args": args,
+            "body": body}
 
-    ENV[name] = fn_obj
-    # ENV[name] = fn
+    # ENV[name] = fn_obj
+    ENV[name] = fn
 
 def parse_id():
     return tokens.pop(0)
@@ -94,7 +94,7 @@ def parse_statement():
         return parse_for()
     elif tokens[0].value == "if":
         return parse_if()
-    elif tokens[0].type == "NUMBER":
+    elif tokens[0].type == "NUMBER" or tokens[0].type == "ID":
         return parse_math_expression()
     #need another elif to look for variable definitions inside function
     #elif tokens[0].type == "ID":
@@ -127,45 +127,64 @@ def parse_variable_def():
         val = parse_str()
     else:
         val = parse_math_expression()    
-    expect(";")
+        expect(";")
     assign_obj = AssignNode(var_name,val)
     # assign_obj.emit_assign_expr()
-    return assign_obj
-    # return {"type": "assign_expr",
-    #             "first": {"type": "id_expr",
-    #                     "val": var_name},
-    #             "second": {"type": "eval_expr",
-    #                     "val": val}}
+    # return assign_obj
+    return {"type": "assign_expr",
+                "first": {"type": "id_expr",
+                        "val": var_name},
+                "second": {"type": "eval_expr",
+                        "val": val}}
 
 # EXPR : FACTOR { ('+' | '-') EXPR } ;
 # FACTOR : INT | '(' EXPR ')' ;
 
 def parse_math_expression():
-    x = parse_factor()
-    if tokens[0].value in mathop_table:
-    # if tokens[0].value == '+' or tokens[0].value == '-':
+    x = parse_term()
+    # if tokens[0].value in mathop_table:
+    if tokens[0].value == '<' or tokens[0].value == '>':
         operator = tokens.pop(0)
         operator = operator.value
         y = parse_math_expression()
         
         op_obj = OpNode(operator,x,y)
 
-        return op_obj
+        # return op_obj
 
-        # return {"type": "op_expr",
-        #         "val": operator,
-        #         "first": {"type": "int_const_expr",
-        #                 "val": x},
-        #         "second": {"type": "int_const_expr",
-        #                 "val": y}}
+        return {"type": "op_expr",
+                "val": operator,
+                "first": {"type": "int_const_expr",
+                        "val": x},
+                "second": {"type": "int_const_expr",
+                        "val": y}}
+    return x
+
+def parse_term():
+    x = parse_factor()
+    if tokens[0].value == '+' or tokens[0].value == '-':
+        operator = tokens.pop(0)
+        operator = operator.value
+        y = parse_math_expression()
+        
+        op_obj = OpNode(operator,x,y)
+
+        # return op_obj
+
+        return {"type": "op_expr",
+                "val": operator,
+                "first": {"type": "int_const_expr",
+                        "val": x},
+                "second": {"type": "int_const_expr",
+                        "val": y}}
     return x
 
 def parse_factor():
-    token = tokens[0].value
-    token = atom(token)
-    if type(token) == int:
+    token = tokens[0]#.value
+    #token = atom(token)
+    if token.type == "NUMBER" or token.type == "ID":
         tokens.pop(0)
-        return token
+        return token.value
     expect("(")  
     expr = parse_math_expression()
     expect(")")
@@ -196,7 +215,9 @@ def parse_if():
     expect("if")
     expect("(")
 
-    n1 = parse_expression()
+    # n1 = parse_expression()
+    n1 = parse_math_expression()
+    expect(")")
     expect("{")
     conseq = parse_statement()
     expect(";")
@@ -210,11 +231,11 @@ def parse_if():
 
     if_obj = IfNode(n1,conseq,alt)
 
-    return if_obj
-    # return {"type": "if",
-    #         "first": n1,
-    #         "second": conseq,
-    #         "third": alt}
+    # return if_obj
+    return {"type": "if",
+            "first": n1,
+            "second": conseq,
+            "third": alt}
 
 def parse_expression():
     contents = [] 
