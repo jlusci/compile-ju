@@ -5,7 +5,7 @@ import ply.lex as lex
 
 # tokens = []
 
-symbol_table = ['+','-','/','*','%']
+mathop_table = ['+','-','/','*','%','<','>','=','<=','>=','!=']
 
 ENV = {}
 
@@ -91,6 +91,10 @@ def parse_statement():
         return parse_for()
     elif tokens[0].value == "if":
         return parse_if()
+    elif tokens[0].type == "NUMBER":
+        return parse_math_expression()
+    #need another elif to look for variable definitions inside function
+    #elif tokens[0].type == "ID":
     else:
         token = tokens[0].value
         # token = token[:-2]
@@ -107,43 +111,19 @@ def parse_statement():
             tokens[0].lineno)
 
 def parse_variable_def():
-    contents = []
-    dictcontents = {}
     expect("var")
     # token = tokens.pop(0)
     token = parse_id()
     var_name = token.value
     expect("=")
-
     if tokens[0].value == "[":
-        expect("[")
-        while tokens[0].value != "]":
-            if tokens[0].value == ',':
-                tokens.pop(0)
-            contents.append(atom(tokens[0].value))
-            tokens.pop(0)
-        expect("]")
-        val = contents
-
+        val = parse_list()
     elif tokens[0].value == "{":
-        expect("{")
-        while tokens[0].value != "}":
-            if tokens[0].value == ",":
-                tokens.pop(0)
-            dictcontents[atom(tokens[0].value)] = atom(tokens[2].value)
-            # tokens = tokens[3:]
-            tokens.pop(0)
-            tokens.pop(0)
-            tokens.pop(0)
-        expect("}")
-        val = dictcontents
-    
-    elif type(atom(tokens[0].value)) == str and tokens[0].value != "(":
+        val = parse_dict()    
+    elif tokens[0].type == "STRING":
         val = parse_str()
-
     else:
-        val = parse_math_expression()
-    
+        val = parse_math_expression()    
     expect(";")
     assign_obj = AssignNode(var_name,val)
     return {"type": "assign_expr",
@@ -157,7 +137,7 @@ def parse_variable_def():
 
 def parse_math_expression():
     x = parse_factor()
-    if tokens[0].value in symbol_table:
+    if tokens[0].value in mathop_table:
     # if tokens[0].value == '+' or tokens[0].value == '-':
         operator = tokens.pop(0)
         operator = operator.value
@@ -186,20 +166,15 @@ def parse_factor():
     return expr 
 
 def parse_for():
-    block = []
+    # block = []
     expect("for")
     expect("(")
-
     n1 = parse_expression()
     n2 = parse_expression()
     n3 = parse_expression()
-
-    while tokens[0].value != ";":
-        block.append(atom(tokens[0].value))
-        tokens.pop(0)
+    block = parse_statement()
     expect(";")
     expect("}")
-
     return {"type": "for",
             "first": n1,
             "second": n2,
@@ -214,53 +189,40 @@ def parse_if():
 
     n1 = parse_expression()
     expect("{")
-
-    while tokens[0].value != ";":
-        conseq.append(atom(tokens[0].value))
-        tokens.pop(0)
+    conseq = parse_statement()
     expect(";")
     expect("}")
     if tokens[0].value == "else":
         expect("else")
         expect("{")
-        while tokens[0].value != ";":
-            alt.append(atom(tokens[0].value))
-            tokens.pop(0)
+        alt = parse_statement()
         expect(";")
         expect("}")
 
     if_obj = IfNode(n1,conseq,alt)
 
-    return if_obj
-    # return {"type": "if",
-    #         "first": n1,
-    #         "second": conseq,
-    #         "third": alt}
-
-def parse_str():
-    contents = []
-    while tokens[0].value != ";":
-        token = tokens.pop(0)
-        token = token.value
-        contents.append(token)
- 
-    return " ".join(contents)
+    # return if_obj
+    return {"type": "if",
+            "first": n1,
+            "second": conseq,
+            "third": alt}
 
 def parse_expression():
-    var_init = []
     contents = [] 
 
     if tokens[0].value == 'var':                #var definition inside statement
-        tokens.pop(0)
-        while tokens[0].value != ";":
-            var_init.append(atom(tokens[0].value))
-            tokens.pop(0)
-        expect(";")
-        return {"type": "assign_expr",
-                "first": {"type": "id_expr",
-                        "val": var_init[0]},
-                "second": {"type": "int_const_expr",
-                        "val": var_init[2]}}
+        first = parse_variable_def()
+        return first
+        # tokens.pop(0)
+        # while tokens[0].value != ";":
+        #     var_init.append(atom(tokens[0].value))
+        #     tokens.pop(0)
+        # expect(";")
+        # return {"type": "assign_expr",
+        #         "first": {"type": "id_expr",
+        #                 "val": var_init[0]},
+        #         "second": {"type": "int_const_expr",
+        #                 "val": var_init[2]}}
     else:
         while tokens[0].value != ";" and tokens[0].value != ")":
                 contents.append(atom(tokens[0].value))
@@ -289,6 +251,40 @@ def parse_expression():
                     "first": {"type": "id_expr",
                             "val": contents[0]},
                     "second": rightn}      
+
+def parse_list():
+    contents = []
+    expect("[")
+    while tokens[0].value != "]":
+        if tokens[0].value == ',':
+            tokens.pop(0)
+        contents.append(atom(tokens[0].value))
+        tokens.pop(0)
+    expect("]")
+    return contents
+
+def parse_dict():
+    dictcontents = {}
+    expect("{")
+    while tokens[0].value != "}":
+        if tokens[0].value == ",":
+            tokens.pop(0)
+        dictcontents[atom(tokens[0].value)] = atom(tokens[2].value)
+        # tokens = tokens[3:]
+        tokens.pop(0)
+        tokens.pop(0)
+        tokens.pop(0)
+    expect("}")
+    return dictcontents
+
+def parse_str():
+    contents = []
+    while tokens[0].value != ";":
+        token = tokens.pop(0)
+        token = token.value
+        contents.append(token)
+ 
+    return " ".join(contents)
 
 def atom(var):
     try: return int(var)
