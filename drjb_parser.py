@@ -28,7 +28,8 @@ class AssignNode(NodeTemplate):
         self.first = first
         self.second = second
         
-    def emit_assign_expr(self):
+    def emit_expr(self):
+    # def emit_assign_expr(self):
         print self.first, "=", self.second
 
 class OpNode(NodeTemplate):
@@ -48,7 +49,8 @@ class IfNode(NodeTemplate):
         self.second = second
         self.third = third
 
-    def emit_ifnode(self):
+    def emit_expr(self):
+    # def emit_ifnode(self):
         print self.istype, self.first
 
 class ForNode(NodeTemplate):
@@ -223,7 +225,7 @@ def parse_for():
         block.append(parse_statement())   
     expect("}")
 
-    for_obj = ForNode(n1,n2,n3,block)
+    for_obj = ForNode("for",n1,n2,n3,block)
     return for_obj
     # return {"type": "for",
     #         "first": n1,
@@ -264,11 +266,14 @@ def parse_var_assign():
     expect("=")
     val = parse_math_expression()
     # expect(";")
-    return {"type": "assign_expr",
-                "first": {"type": "id_expr",
-                        "val": var_name},
-                "second": {"type": "eval_expr",
-                        "val": val}}     
+    assign_obj = AssignNode("assign_expr",var_name,val)
+    # assign_obj.emit_assign_expr()
+    return assign_obj
+    # return {"type": "assign_expr",
+    #             "first": {"type": "id_expr",
+    #                     "val": var_name},
+    #             "second": {"type": "eval_expr",
+    #                     "val": val}}     
 
 def parse_list():
     contents = []
@@ -314,7 +319,9 @@ def emit_all():
         fn_obj.emit_function()
         for stmt in fn_obj.body:
             # print stmt.istype, stmt.first, stmt.second
-            stmt.emit_assign_expr()
+            # stmt.emit_assign_expr()
+            stmt.emit_expr()
+
 
 def main():
     global tokens
