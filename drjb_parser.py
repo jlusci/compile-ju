@@ -5,7 +5,7 @@ import ply.lex as lex
 
 # tokens = []
 
-mathop_table = ['+','-','/','*','%','<','>','=','<=','>=','!=']
+mathop_list = ['<','>','==','<=','>=','!=']
 
 ENV = {}
 
@@ -13,33 +13,47 @@ class NodeTemplate(object):
     pass
 
 class FunctionNode(NodeTemplate):
-    def __init__(self,name,args,body):
+    def __init__(self,istype,name,args,body):
+        self.istype = istype
         self.name = name
         self.args = args
         self.body = body
 
-class AssignNode(NodeTemplate):
-    def __init__(self,first,second):
-        self.first = first
-        self.second = second
-        
-        def emit_assign_expr(self):
-            print self.first, "=", self.second
+    def emit_function(self):
+        print "def", self.name,"():"
 
-class OpNode(NodeTemplate):
+class AssignNode(NodeTemplate):
     def __init__(self,istype,first,second):
         self.istype = istype
         self.first = first
         self.second = second
+        
+    def emit_assign_expr(self):
+        print self.first, "=", self.second
+
+class OpNode(NodeTemplate):
+    def __init__(self,istype,op,first,second):
+        self.istype = istype
+        self.op = op
+        self.first = first
+        self.second = second
+
+    def emit_opnode(self):
+        print self.first, self.op, self.second
 
 class IfNode(NodeTemplate):
-    def __init__(self,first,second,third):
+    def __init__(self,istype,first,second,third):
+        self.istype = istype
         self.first = first
         self.second = second
         self.third = third
 
+    def emit_ifnode(self):
+        print self.istype, self.first
+
 class ForNode(NodeTemplate):
-    def __init__(self,first,second,third,block):
+    def __init__(self,istype,first,second,third,block):
+        self.istype = istype
         self.first = first
         self.second = second
         self.third = third
@@ -49,7 +63,7 @@ def expect(thing_to_expect):
     token = tokens.pop(0)
     if token.value != thing_to_expect:
         raise Exception("Wrong token! Expected: ", thing_to_expect, "and got: ", 
-            token.value, "on line:", token.lineno)
+            token.value, "on line:", token.lineno, ", position:", token.lexpos)
     return token
 
 def parse_tokens():
@@ -65,17 +79,19 @@ def parse_function():
     body = []
 
     while tokens[0].value != "}":
-        body.append(parse_statement())   #statments is a list of dictionaries
+        body.append(parse_statement())   #fn body is a list of dictionaries
     expect("}")
 
-    fn_obj = FunctionNode(name,args,body)
+    fn_obj = FunctionNode("function",name,args,body)
+
     fn =  {"type": "function",
             "name": name,
             "args": args,
             "body": body}
 
-    # ENV[name] = fn_obj
-    ENV[name] = fn
+    ENV[name] = fn_obj
+    # ENV[name] = fn
+    # fn_obj.emit_function()
 
 def parse_id():
     return tokens.pop(0)
@@ -94,8 +110,11 @@ def parse_statement():
         return parse_for()
     elif tokens[0].value == "if":
         return parse_if()
-    elif tokens[0].type == "NUMBER" or tokens[0].type == "ID":
-        return parse_math_expression()
+    elif tokens[0].type == "ID" and tokens[1].value != "(":
+        # return parse_math_expression()
+        x = parse_var_assign()
+        expect(";")
+        return x
     #need another elif to look for variable definitions inside function
     #elif tokens[0].type == "ID":
     else:
@@ -127,15 +146,15 @@ def parse_variable_def():
         val = parse_str()
     else:
         val = parse_math_expression()    
-        expect(";")
-    assign_obj = AssignNode(var_name,val)
+    expect(";")
+    assign_obj = AssignNode("assign_expr",var_name,val)
     # assign_obj.emit_assign_expr()
-    # return assign_obj
-    return {"type": "assign_expr",
-                "first": {"type": "id_expr",
-                        "val": var_name},
-                "second": {"type": "eval_expr",
-                        "val": val}}
+    return assign_obj
+    # return {"type": "assign_expr",
+                # "first": {"type": "id_expr",
+                #         "val": var_name},
+                # "second": {"type": "eval_expr",
+                #         "val": val}}
 
 # EXPR : FACTOR { ('+' | '-') EXPR } ;
 # FACTOR : INT | '(' EXPR ')' ;
@@ -143,21 +162,21 @@ def parse_variable_def():
 def parse_math_expression():
     x = parse_term()
     # if tokens[0].value in mathop_table:
-    if tokens[0].value == '<' or tokens[0].value == '>':
+    if tokens[0].value in mathop_list:
         operator = tokens.pop(0)
         operator = operator.value
         y = parse_math_expression()
         
-        op_obj = OpNode(operator,x,y)
+        op_obj = OpNode("op_expr",operator,x,y)
 
-        # return op_obj
+        return op_obj
 
-        return {"type": "op_expr",
-                "val": operator,
-                "first": {"type": "int_const_expr",
-                        "val": x},
-                "second": {"type": "int_const_expr",
-                        "val": y}}
+        # return {"type": "op_expr",
+        #         "val": operator,
+        #         "first": {"type": "int_const_expr",
+        #                 "val": x},
+        #         "second": {"type": "int_const_expr",
+        #                 "val": y}}
     return x
 
 def parse_term():
@@ -167,20 +186,20 @@ def parse_term():
         operator = operator.value
         y = parse_math_expression()
         
-        op_obj = OpNode(operator,x,y)
+        op_obj = OpNode("op_expr",operator,x,y)
 
-        # return op_obj
+        return op_obj
 
-        return {"type": "op_expr",
-                "val": operator,
-                "first": {"type": "int_const_expr",
-                        "val": x},
-                "second": {"type": "int_const_expr",
-                        "val": y}}
+        # return {"type": "op_expr",
+        #         "val": operator,
+        #         "first": {"type": "int_const_expr",
+        #                 "val": x},
+        #         "second": {"type": "int_const_expr",
+        #                 "val": y}}
     return x
 
 def parse_factor():
-    token = tokens[0]#.value
+    token = tokens[0]
     #token = atom(token)
     if token.type == "NUMBER" or token.type == "ID":
         tokens.pop(0)
@@ -191,14 +210,17 @@ def parse_factor():
     return expr 
 
 def parse_for():
-    # block = []
+    block = []
     expect("for")
     expect("(")
-    n1 = parse_expression()
-    n2 = parse_expression()
-    n3 = parse_expression()
-    block = parse_statement()
+    n1 = parse_variable_def()         #declare variable inside loop
+    n2 = parse_math_expression()
     expect(";")
+    n3 = parse_var_assign()
+    expect(")")
+    expect("{")
+    while tokens[0].value != "}":
+        block.append(parse_statement())   
     expect("}")
 
     for_obj = ForNode(n1,n2,n3,block)
@@ -215,72 +237,38 @@ def parse_if():
     expect("if")
     expect("(")
 
-    # n1 = parse_expression()
     n1 = parse_math_expression()
     expect(")")
     expect("{")
-    conseq = parse_statement()
-    expect(";")
+    while tokens[0].value != "}":
+        conseq.append(parse_statement())   
     expect("}")
     if tokens[0].value == "else":
         expect("else")
         expect("{")
-        alt = parse_statement()
-        expect(";")
+        while tokens[0].value != "}":
+            alt.append(parse_statement())  
         expect("}")
 
-    if_obj = IfNode(n1,conseq,alt)
+    if_obj = IfNode("if",n1,conseq,alt)
 
-    # return if_obj
-    return {"type": "if",
-            "first": n1,
-            "second": conseq,
-            "third": alt}
+    return if_obj
+    # return {"type": "if",
+    #         "first": n1,
+    #         "second": conseq,
+    #         "third": alt}
 
-def parse_expression():
-    contents = [] 
-
-    if tokens[0].value == 'var':                #var definition inside statement
-        first = parse_variable_def()
-        return first
-        # tokens.pop(0)
-        # while tokens[0].value != ";":
-        #     var_init.append(atom(tokens[0].value))
-        #     tokens.pop(0)
-        # expect(";")
-        # return {"type": "assign_expr",
-        #         "first": {"type": "id_expr",
-        #                 "val": var_init[0]},
-        #         "second": {"type": "int_const_expr",
-        #                 "val": var_init[2]}}
-    else:
-        while tokens[0].value != ";" and tokens[0].value != ")":
-                contents.append(atom(tokens[0].value))
-                tokens.pop(0)
-        # expect(";")
-        tokens.pop(0)
-        if len(contents) == 3:                  #simple comparison, ex x < 5
-            return {"type": "op_expr",
-                    "val": contents[1],
-                    "first": {"type": "id_expr",
-                            "val": contents[0]},
-                    "second": {"type": "int_const_expr",
-                            "val": contents[2]}}
-        elif len(contents) == 5:                #doing some operation, ex x = x + 1
-            # tokens.pop(0)
-            expect("{")
-            # tokens.pop(0)
-            rightn = {"type": "op_expr",
-                    "val": contents[3],
-                    "first": {"type": "id_expr",
-                            "val": contents[2]},
-                    "second": {"type": "int_const_expr",
-                            "val": contents[4]}}
-            return {"type": "assign_expr",
-                    "val": contents[1],
-                    "first": {"type": "id_expr",
-                            "val": contents[0]},
-                    "second": rightn}      
+def parse_var_assign():
+    var_name = tokens.pop(0)
+    var_name = var_name.value
+    expect("=")
+    val = parse_math_expression()
+    # expect(";")
+    return {"type": "assign_expr",
+                "first": {"type": "id_expr",
+                        "val": var_name},
+                "second": {"type": "eval_expr",
+                        "val": val}}     
 
 def parse_list():
     contents = []
@@ -320,6 +308,14 @@ def atom(var):
     try: return int(var)
     except: return str(var)
 
+def emit_all():
+    for fn in ENV.keys():
+        fn_obj = ENV[fn]
+        fn_obj.emit_function()
+        for stmt in fn_obj.body:
+            # print stmt.istype, stmt.first, stmt.second
+            stmt.emit_assign_expr()
+
 def main():
     global tokens
     # f = open(sys.argv[1])
@@ -337,6 +333,7 @@ def main():
 
     parse_tokens()               
     print ENV
+    emit_all()
 
 if __name__ == "__main__":
     main()
