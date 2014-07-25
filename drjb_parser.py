@@ -13,8 +13,7 @@ class NodeTemplate(object):
     pass
 
 class FunctionNode(NodeTemplate):
-    def __init__(self,istype,name,args,body):
-        self.istype = istype
+    def __init__(self,name,args,body):
         self.name = name
         self.args = args
         self.body = body
@@ -23,8 +22,7 @@ class FunctionNode(NodeTemplate):
         print "def", self.name,"():"
 
 class AssignNode(NodeTemplate):
-    def __init__(self,istype,first,second):
-        self.istype = istype
+    def __init__(self,first,second):
         self.first = first
         self.second = second
         
@@ -33,29 +31,29 @@ class AssignNode(NodeTemplate):
         print self.first, "=", self.second
 
 class OpNode(NodeTemplate):
-    def __init__(self,istype,op,first,second):
-        self.istype = istype
+    def __init__(self,op,first,second):
         self.op = op
         self.first = first
         self.second = second
 
-    def emit_opnode(self):
+    def emit_expr(self):
         print self.first, self.op, self.second
 
 class IfNode(NodeTemplate):
-    def __init__(self,istype,first,second,third):
-        self.istype = istype
+    def __init__(self,first,second,third):
         self.first = first
         self.second = second
         self.third = third
 
     def emit_expr(self):
     # def emit_ifnode(self):
-        print self.istype, self.first
+        print "if", self.first.first, self.first.op, self.first.second, ":"
+        print "     ", 
+        for item in self.second:
+            print item.first, "=", item.second.first,
 
 class ForNode(NodeTemplate):
-    def __init__(self,istype,first,second,third,block):
-        self.istype = istype
+    def __init__(self,first,second,third,block):
         self.first = first
         self.second = second
         self.third = third
@@ -84,12 +82,12 @@ def parse_function():
         body.append(parse_statement())   #fn body is a list of dictionaries
     expect("}")
 
-    fn_obj = FunctionNode("function",name,args,body)
+    fn_obj = FunctionNode(name,args,body)
 
-    fn =  {"type": "function",
-            "name": name,
-            "args": args,
-            "body": body}
+    # fn =  {"type": "function",
+    #         "name": name,
+    #         "args": args,
+    #         "body": body}
 
     ENV[name] = fn_obj
     # ENV[name] = fn
@@ -113,12 +111,9 @@ def parse_statement():
     elif tokens[0].value == "if":
         return parse_if()
     elif tokens[0].type == "ID" and tokens[1].value != "(":
-        # return parse_math_expression()
         x = parse_var_assign()
         expect(";")
         return x
-    #need another elif to look for variable definitions inside function
-    #elif tokens[0].type == "ID":
     else:
         token = tokens[0].value
         # token = token[:-2]
@@ -149,14 +144,14 @@ def parse_variable_def():
     else:
         val = parse_math_expression()    
     expect(";")
-    assign_obj = AssignNode("assign_expr",var_name,val)
-    # assign_obj.emit_assign_expr()
+    assign_obj = AssignNode(var_name,val)
+    assign_obj.emit_expr()
     return assign_obj
     # return {"type": "assign_expr",
-                # "first": {"type": "id_expr",
-                #         "val": var_name},
-                # "second": {"type": "eval_expr",
-                #         "val": val}}
+    #             "first": {"type": "id_expr",
+    #                     "val": var_name},
+    #             "second": {"type": "eval_expr",
+    #                     "val": val}}
 
 # EXPR : FACTOR { ('+' | '-') EXPR } ;
 # FACTOR : INT | '(' EXPR ')' ;
@@ -169,7 +164,7 @@ def parse_math_expression():
         operator = operator.value
         y = parse_math_expression()
         
-        op_obj = OpNode("op_expr",operator,x,y)
+        op_obj = OpNode(operator,x,y)
 
         return op_obj
 
@@ -182,13 +177,32 @@ def parse_math_expression():
     return x
 
 def parse_term():
-    x = parse_factor()
+    x = parse_mult()
     if tokens[0].value == '+' or tokens[0].value == '-':
         operator = tokens.pop(0)
         operator = operator.value
-        y = parse_math_expression()
+        y = parse_term()
         
-        op_obj = OpNode("op_expr",operator,x,y)
+        op_obj = OpNode(operator,x,y)
+
+        return op_obj
+
+        # return {"type": "op_expr",
+        #         "val": operator,
+        #         "first": {"type": "int_const_expr",
+        #                 "val": x},
+        #         "second": {"type": "int_const_expr",
+        #                 "val": y}}
+    return x
+
+def parse_mult():
+    x = parse_factor()
+    if tokens[0].value == '*' or tokens[0].value == '/':
+        operator = tokens.pop(0)
+        operator = operator.value
+        y = parse_mult()
+        
+        op_obj = OpNode(operator,x,y)
 
         return op_obj
 
@@ -225,7 +239,7 @@ def parse_for():
         block.append(parse_statement())   
     expect("}")
 
-    for_obj = ForNode("for",n1,n2,n3,block)
+    for_obj = ForNode(n1,n2,n3,block)
     return for_obj
     # return {"type": "for",
     #         "first": n1,
@@ -252,8 +266,8 @@ def parse_if():
             alt.append(parse_statement())  
         expect("}")
 
-    if_obj = IfNode("if",n1,conseq,alt)
-
+    if_obj = IfNode(n1,conseq,alt)
+    # print if_obj.first.first, if_obj.first.op, if_obj.first.second
     return if_obj
     # return {"type": "if",
     #         "first": n1,
@@ -266,7 +280,7 @@ def parse_var_assign():
     expect("=")
     val = parse_math_expression()
     # expect(";")
-    assign_obj = AssignNode("assign_expr",var_name,val)
+    assign_obj = AssignNode(var_name,val)
     # assign_obj.emit_assign_expr()
     return assign_obj
     # return {"type": "assign_expr",
