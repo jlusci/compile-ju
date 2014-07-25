@@ -5,7 +5,7 @@ import ply.lex as lex
 
 # tokens = []
 
-mathop_list = ['<','>','==','<=','>=','!=']
+mathop_list = ['<','>','===','<=','>=','!==']
 
 ENV = {}
 
