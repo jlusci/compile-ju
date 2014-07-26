@@ -3,15 +3,15 @@ function main() {
 	print 3+3;
 	var x = 3;
 	print x +5+9;
-	var x = x+1*9;
+	var x = x+3;
 	print x;
 	var y = [1,2];
 	var dict = {'key':'value'};
 	print dict;
 	print y;
-	if (x > 5){
-		print x;
+	if (x % 5 == 0){
+		print "yes, x mod 5 is zero";
 	} else {
-		print "no";
+		print "no, x mod 5 is not zero";
 	}
 }
