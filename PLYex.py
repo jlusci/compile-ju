@@ -86,7 +86,7 @@ def t_EOLCOMMENT(t):
 # A regular expression rule with some action code
 def t_STRING(t):
     # r'["\'][a-zA-Z0-9]*["\']'
-    r'["\'][\s\w\,\.]*["\']'
+    r'["\'][\s\w\,\.\(\)\?]*["\']'
     t.value = t.value.strip('"\'')
     return t
 
