@@ -110,7 +110,7 @@ class OpNode(NodeTemplate):
                 return True
             else:
                 return False
-                
+
 class IfNode(NodeTemplate):
     def __init__(self, first, second, third):
         self.first = first
@@ -140,9 +140,18 @@ class ForNode(NodeTemplate):
 
     def emit(self):
         pass
+        # print self.first.first.name, self.first.second.val
+        # print self.second.first.name, self.second.op, self.second.second.val
+        # print self.third.first, self.third.second.first.name, self.third.second.op, \
+        # self.third.second.second.val
+        # for line in self.block.lines:
+        #     print "*****", line.first.name  #ID node has .name attribute
 
     def eval(self, env):
-        pass
+        self.first.eval(env)
+        while self.second.eval(env):
+            self.block.eval(env)
+            self.third.eval(env)
 
 class PrintNode(NodeTemplate):
     def __init__(self,first):
@@ -390,6 +399,7 @@ def parse_for():
     block = parse_block()
 
     for_obj = ForNode(n1,n2,n3,block)
+    for_obj.emit()
     return for_obj
     # return {"type": "for",
     #         "first": n1,
@@ -433,8 +443,9 @@ def parse_print():
     return print_obj
 
 def parse_var_assign():
-    var_name = tokens.pop(0)
-    var_name = var_name.value
+    var_name = parse_id()
+    # var_name = tokens.pop(0)
+    # var_name = var_name.value
     expect("=")
     val = parse_expression()
     # expect(";")
@@ -471,16 +482,15 @@ def parse_dict():
     expect("}")
     return dictcontents
 
-def parse_str():
-    # contents = []
-    # while tokens[0].value != ";":
-    #     token = tokens.pop(0)
-    #     token = token.value
-    #     contents.append(token)
+# def parse_str():
+#     # contents = []
+#     # while tokens[0].value != ";":
+#     #     token = tokens.pop(0)
+#     #     token = token.value
+#     #     contents.append(token)
  
-    # return " ".join(contents)
-    str_obj = StringNode()
-
+#     # return " ".join(contents)
+#     str_obj = StringNode()
 
 def atom(var):
     try: return int(var)
@@ -516,7 +526,6 @@ def main():
     program = parse_program() 
     program.eval({})              
     print ENV
-    # emit_all()
 
 if __name__ == "__main__":
     main()
