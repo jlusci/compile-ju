@@ -22,8 +22,9 @@ class ProgramNode(NodeTemplate):
 
     def eval(self, env):
         for fn in self.functions:
-            if fn.name == "main":
-                fn.eval(env)
+            fn.eval(env)
+            # if fn.name == "main":
+            #     fn.eval(env)
 
 class FunctionNode(NodeTemplate):
     def __init__(self, name, args, body):
@@ -273,13 +274,15 @@ def parse_statement():
         # token = token[:-2]
         if token in ENV.keys():
             token = tokens.pop(0)
-            token = token.value
+            fn_token = token.value
+            fn_obj = ENV[fn_token]
             expect("(")
             expect(")")
             expect(";")
-            print "THIS FUNCTION CALLS THE FUNCTION:", token
-            return {"name": token,
-                    "type": "function call"}
+            return fn_obj
+            # print "THIS FUNCTION CALLS THE FUNCTION:", fn_token
+            # return {"name": fn_token,
+            #         "type": "function call"}
         raise Exception("WTF ", tokens[0].value, "IS NOT A KEYWORD. Error on line:",
             tokens[0].lineno)
 
