@@ -14,4 +14,7 @@ function main() {
 	} else {
 		print "no, x mod 5 is not zero";
 	}
+	for (var i = 0; i <= 5; i = i + 1) {
+		print i;
+	}
 }
