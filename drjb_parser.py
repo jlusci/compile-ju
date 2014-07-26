@@ -5,59 +5,167 @@ import ply.lex as lex
 
 # tokens = []
 
-mathop_list = ['<','>','===','<=','>=','!==']
+mathop_list = ['<','>','==','<=','>=','!=']
 
 ENV = {}
 
 class NodeTemplate(object):
     pass
 
+class ProgramNode(NodeTemplate):
+    def __init__(self, functions):
+        self.functions = functions
+
+    def emit(self):
+        for function in self.functions:
+            function.emit()
+
+    def eval(self, env):
+        for fn in self.functions:
+            if fn.name == "main":
+                fn.eval(env)
+
 class FunctionNode(NodeTemplate):
-    def __init__(self,name,args,body):
+    def __init__(self, name, args, body):
         self.name = name
         self.args = args
         self.body = body
 
-    def emit_function(self):
-        print "def", self.name,"():"
+    def emit(self):
+        print "def", self.name+"():"
+
+    def eval(self, env):
+        self.body.eval(env)
+
+class BlockNode(NodeTemplate):
+    def __init__(self, lines):
+        self.lines = lines
+
+    def emit(self):
+        for line in self.lines:
+            line.emit()
+
+    def eval(self, env):
+        for line in self.lines:
+            line.eval(env)
 
 class AssignNode(NodeTemplate):
-    def __init__(self,first,second):
+    def __init__(self, first, second):
         self.first = first
         self.second = second
         
-    def emit_expr(self):
-    # def emit_assign_expr(self):
-        print self.first, "=", self.second
+    def emit(self):
+        print "    ",self.first, "=", self.second
+
+    def eval(self, env):
+        env[self.first.name] = self.second.eval(env)
 
 class OpNode(NodeTemplate):
-    def __init__(self,op,first,second):
+    def __init__(self, op, first, second):
         self.op = op
         self.first = first
         self.second = second
 
-    def emit_expr(self):
-        print self.first, self.op, self.second
+    def emit(self):
+        print "    ",self.first, self.op, self.second
+
+    def eval(self, env):
+        if self.op == "+":
+            return self.first.eval(env) + self.second.eval(env)
+        if self.op == "-":
+            return self.first.eval(env) - self.second.eval(env)
+        if self.op == "*":
+            return self.first.eval(env) * self.second.eval(env)
+        if self.op == "/":
+            return self.first.eval(env) / self.second.eval(env)
+        if self.op == "<":
+            if self.first.eval(env) < self.second.eval(env):
+                return True
+            else:
+                return False
+        if self.op == ">":
+            if self.first.eval(env) > self.second.eval(env):
+                return True
+            else:
+                return False
 
 class IfNode(NodeTemplate):
-    def __init__(self,first,second,third):
+    def __init__(self, first, second, third):
         self.first = first
         self.second = second
         self.third = third
 
-    def emit_expr(self):
+    def emit(self):
     # def emit_ifnode(self):
-        print "if", self.first.first, self.first.op, self.first.second, ":"
-        print "     ", 
-        for item in self.second:
-            print item.first, "=", item.second.first,
+        print "     if", self.first.first, self.first.op, self.first.second,":"
+        print "        ", 
+        # for item in self.second:
+        #     print item.first, "=", item.second.first,item.second.op,item.second.second
+
+    def eval(self, env):
+        result = self.first.eval(env)
+        if result:
+            return self.second.eval(env)
+        else:
+            return self.third.eval(env)
 
 class ForNode(NodeTemplate):
-    def __init__(self,first,second,third,block):
+    def __init__(self, first, second, third, block):
         self.first = first
         self.second = second
         self.third = third
         self.block = block
+
+    def emit(self):
+        pass
+
+    def eval(self, env):
+        pass
+
+class PrintNode(NodeTemplate):
+    def __init__(self,first):
+        self.first = first
+
+    def emit(self):
+        print "print", self.first
+
+    def eval(self, env):
+        print self.first.eval(env)
+
+class StringNode(NodeTemplate):
+    def __init__(self,val):
+        self.val = val 
+
+    def eval(self, env):
+        return self.val
+
+class IntNode(NodeTemplate):
+    def __init__(self, val):
+        self.val = val
+
+    def eval(self, env):
+        return self.val
+
+class IDNode(NodeTemplate):
+    def __init__(self, name):
+        self.name = name
+
+    def eval(self, env):
+        return env.get(self.name)
+
+class ListNode(NodeTemplate):
+    def __init__(self, val):
+        self.val = val 
+
+    def eval(self, env):
+        return self.val
+
+class DictNode(NodeTemplate):
+    def __init__(self, val):
+        self.val = val 
+
+    def eval(self, env):
+        return self.val
 
 def expect(thing_to_expect):
     token = tokens.pop(0)
@@ -66,21 +174,25 @@ def expect(thing_to_expect):
             token.value, "on line:", token.lineno, ", position:", token.lexpos)
     return token
 
-def parse_tokens():
+def parse_program():
+    functions = []
     while tokens:
         if tokens[0].value == 'function':
             tokens.pop(0)
-            parse_function()
-
+            fn = parse_function()
+            functions.append(fn)
+    pgm = ProgramNode(functions)
+    return pgm
+            
 def parse_function():
-    name = parse_id().value
+    name = parse_id().name
     print "OUR FUNCTION IS CALLED:", name
     args = parse_args()
-    body = []
+    body = parse_block()
 
-    while tokens[0].value != "}":
-        body.append(parse_statement())   #fn body is a list of dictionaries
-    expect("}")
+    # while tokens[0].value != "}":
+    #     body.append(parse_statement())   #fn body is a list of dictionaries
+    # expect("}")
 
     fn_obj = FunctionNode(name,args,body)
 
@@ -90,11 +202,12 @@ def parse_function():
     #         "body": body}
 
     ENV[name] = fn_obj
-    # ENV[name] = fn
-    # fn_obj.emit_function()
+    return fn_obj
 
 def parse_id():
-    return tokens.pop(0)
+    name = tokens.pop(0)
+    id_ = IDNode(name.value)
+    return id_
 
 def parse_args():
     expect("(")
@@ -103,6 +216,14 @@ def parse_args():
     expect("{")
     return []
 
+def parse_block():
+    lines = []
+    while tokens[0].value != "}":
+        lines.append(parse_statement())
+    expect("}")
+    block = BlockNode(lines)
+    return block 
+
 def parse_statement():
     if tokens[0].value == "var":
         return parse_variable_def()
@@ -110,6 +231,8 @@ def parse_statement():
         return parse_for()
     elif tokens[0].value == "if":
         return parse_if()
+    elif tokens[0].value == "print":
+        return parse_print()
     elif tokens[0].type == "ID" and tokens[1].value != "(":
         x = parse_var_assign()
         expect(";")
@@ -131,21 +254,17 @@ def parse_statement():
 
 def parse_variable_def():
     expect("var")
-    # token = tokens.pop(0)
-    token = parse_id()
-    var_name = token.value
+    var_name = parse_id()
     expect("=")
-    if tokens[0].value == "[":
-        val = parse_list()
-    elif tokens[0].value == "{":
-        val = parse_dict()    
-    elif tokens[0].type == "STRING":
-        val = parse_str()
-    else:
-        val = parse_math_expression()    
+    # if tokens[0].value == "[":
+    #     val = parse_list()
+    # elif tokens[0].value == "{":
+    #     val = parse_dict()    
+    # else:
+    val = parse_expression()    
     expect(";")
     assign_obj = AssignNode(var_name,val)
-    assign_obj.emit_expr()
+    # assign_obj.emit_expr()
     return assign_obj
     # return {"type": "assign_expr",
     #             "first": {"type": "id_expr",
@@ -156,13 +275,22 @@ def parse_variable_def():
 # EXPR : FACTOR { ('+' | '-') EXPR } ;
 # FACTOR : INT | '(' EXPR ')' ;
 
-def parse_math_expression():
+def parse_expression():
+    if tokens[0].value == "[":
+        val = parse_list()
+        return ListNode(val)
+    elif tokens[0].value == "{":
+        val = parse_dict()
+        return DictNode(val)
+    elif tokens[0].type == "STRING":
+        token = tokens.pop(0)
+        return StringNode(token.value)
+
     x = parse_term()
-    # if tokens[0].value in mathop_table:
     if tokens[0].value in mathop_list:
         operator = tokens.pop(0)
         operator = operator.value
-        y = parse_math_expression()
+        y = parse_expression()
         
         op_obj = OpNode(operator,x,y)
 
@@ -197,7 +325,7 @@ def parse_term():
 
 def parse_mult():
     x = parse_factor()
-    if tokens[0].value == '*' or tokens[0].value == '/':
+    if tokens[0].value == '*' or tokens[0].value == '/' or tokens[0].value == '%':
         operator = tokens.pop(0)
         operator = operator.value
         y = parse_mult()
@@ -217,27 +345,27 @@ def parse_mult():
 def parse_factor():
     token = tokens[0]
     #token = atom(token)
-    if token.type == "NUMBER" or token.type == "ID":
+    if token.type == "NUMBER": 
         tokens.pop(0)
-        return token.value
+        return IntNode(token.value)
+    elif token.type == "ID":
+        tokens.pop(0)
+        return IDNode(token.value)
     expect("(")  
-    expr = parse_math_expression()
+    expr = parse_expression()
     expect(")")
     return expr 
 
 def parse_for():
-    block = []
     expect("for")
     expect("(")
     n1 = parse_variable_def()         #declare variable inside loop
-    n2 = parse_math_expression()
+    n2 = parse_expression()
     expect(";")
     n3 = parse_var_assign()
     expect(")")
     expect("{")
-    while tokens[0].value != "}":
-        block.append(parse_statement())   
-    expect("}")
+    block = parse_block()
 
     for_obj = ForNode(n1,n2,n3,block)
     return for_obj
@@ -248,40 +376,47 @@ def parse_for():
     #         "block": block}
 
 def parse_if():
-    conseq = []
-    alt = []
+    # conseq = []
+    # alt = []
     expect("if")
     expect("(")
-
-    n1 = parse_math_expression()
+    n1 = parse_expression()
     expect(")")
     expect("{")
-    while tokens[0].value != "}":
-        conseq.append(parse_statement())   
-    expect("}")
+    conseq = parse_block()
+    alt = None
     if tokens[0].value == "else":
         expect("else")
         expect("{")
-        while tokens[0].value != "}":
-            alt.append(parse_statement())  
-        expect("}")
+        alt = parse_block()
 
     if_obj = IfNode(n1,conseq,alt)
-    # print if_obj.first.first, if_obj.first.op, if_obj.first.second
+    # print if_obj.first.first.first, if_obj.first.first.op, if_obj.first.first.second,\
+    # if_obj.first.op, if_obj.first.second
+    # print if_obj.second[0].first
+    # print "***** HERE IS MY ELSE STATEMENT:",if_obj.third[0].first
+    # print type(if_obj.third[0])
+    # print if_obj.eval()
     return if_obj
     # return {"type": "if",
     #         "first": n1,
     #         "second": conseq,
     #         "third": alt}
 
+def parse_print():
+    expect("print")
+    val = parse_expression()
+    print_obj = PrintNode(val)
+    expect(";")
+    return print_obj
+
 def parse_var_assign():
     var_name = tokens.pop(0)
     var_name = var_name.value
     expect("=")
-    val = parse_math_expression()
+    val = parse_expression()
     # expect(";")
     assign_obj = AssignNode(var_name,val)
-    # assign_obj.emit_assign_expr()
     return assign_obj
     # return {"type": "assign_expr",
     #             "first": {"type": "id_expr",
@@ -315,13 +450,15 @@ def parse_dict():
     return dictcontents
 
 def parse_str():
-    contents = []
-    while tokens[0].value != ";":
-        token = tokens.pop(0)
-        token = token.value
-        contents.append(token)
+    # contents = []
+    # while tokens[0].value != ";":
+    #     token = tokens.pop(0)
+    #     token = token.value
+    #     contents.append(token)
  
-    return " ".join(contents)
+    # return " ".join(contents)
+    str_obj = StringNode()
+
 
 def atom(var):
     try: return int(var)
@@ -330,11 +467,13 @@ def atom(var):
 def emit_all():
     for fn in ENV.keys():
         fn_obj = ENV[fn]
-        fn_obj.emit_function()
-        for stmt in fn_obj.body:
-            # print stmt.istype, stmt.first, stmt.second
-            # stmt.emit_assign_expr()
-            stmt.emit_expr()
+        fn_obj.emit()
+        # fn_obj.body[1].second[0].eval()
+        # for stmt in fn_obj.body:
+        #     # print stmt.istype, stmt.first, stmt.second
+        #     # stmt.emit_assign_expr()
+        #     stmt.emit()
+        #     stmt.eval()
 
 
 def main():
@@ -352,9 +491,10 @@ def main():
 
     print "HERE ARE MY TOKENS:", tokens
 
-    parse_tokens()               
+    program = parse_program() 
+    program.eval({})              
     print ENV
-    emit_all()
+    # emit_all()
 
 if __name__ == "__main__":
     main()
