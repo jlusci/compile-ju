@@ -78,6 +78,8 @@ class OpNode(NodeTemplate):
             return self.first.eval(env) * self.second.eval(env)
         if self.op == "/":
             return self.first.eval(env) / self.second.eval(env)
+        if self.op == "%":
+            return self.first.eval(env) % self.second.eval(env)
         if self.op == "<":
             if self.first.eval(env) < self.second.eval(env):
                 return True
@@ -88,7 +90,27 @@ class OpNode(NodeTemplate):
                 return True
             else:
                 return False
-
+        if self.op == ">=":
+            if self.first.eval(env) >= self.second.eval(env):
+                return True
+            else:
+                return False
+        if self.op == "<=":
+            if self.first.eval(env) <= self.second.eval(env):
+                return True
+            else:
+                return False
+        if self.op == "==":
+            if self.first.eval(env) == self.second.eval(env):
+                return True
+            else:
+                return False
+        if self.op == "!=":
+            if self.first.eval(env) != self.second.eval(env):
+                return True
+            else:
+                return False
+                
 class IfNode(NodeTemplate):
     def __init__(self, first, second, third):
         self.first = first
