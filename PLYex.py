@@ -15,7 +15,8 @@ reserved = {
    'then' : 'THEN',
    'else' : 'ELSE',
    'for' : 'FOR',
-   'var' : 'VAR'
+   'var' : 'VAR',
+   'print': 'PRINT'
    }
 
 # List of token names.   
@@ -57,13 +58,13 @@ t_DIVIDE  = r'/'
 t_POWER   = r'\^'
 t_MODULO  = r'%'
 
-t_ISEQ    = r'==='
+t_ISEQ    = r'=='
 t_ASSIGN  = r'='
 t_LESS      = r'<'
 t_GREATER   = r'>'
 t_LESSEQ    = r'<='
 t_GREATEQ   = r'>='
-t_NOTEQ     = r'!=='
+t_NOTEQ     = r'!='
 
 t_LPAREN  = r'\('
 t_RPAREN  = r'\)'
