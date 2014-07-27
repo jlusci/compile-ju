@@ -34,6 +34,7 @@ class FunctionNode(NodeTemplate):
 
     def emit(self):
         print "def", self.name+"():"
+        self.body.emit()
 
     def eval(self, env):
         self.body.eval(env)
@@ -56,7 +57,7 @@ class AssignNode(NodeTemplate):
         self.second = second
         
     def emit(self):
-        print "    ",self.first, "=", self.second
+        print "    ",self.first.name, "=", self.second
 
     def eval(self, env):
         env[self.first.name] = self.second.eval(env)
@@ -309,6 +310,11 @@ def parse_variable_def():
 # EXPR : FACTOR { ('+' | '-') EXPR } ;
 # FACTOR : INT | '(' EXPR ')' ;
 
+# EXPR : TERM { ('<' | '>' | '<=' | '>=' | '!=' | '=!') EXPR } ;
+# TERM : MULT { ('+' | '-') TERM } ;
+# MULT : FACTOR { ('*' | '/' | '%') MULT };
+# FACTOR : INT | ID | '(' EXPR ')' ;
+
 def parse_expression():
     if tokens[0].value == "[":
         val = parse_list()
@@ -524,11 +530,11 @@ def main():
         # # appends ONLY list of values
         # tokens.append(tokenlist[item].value)
 
-    print "HERE ARE MY TOKENS:", tokens
+    # print "HERE ARE MY TOKENS:", tokenlist         #check tokenlist
 
     program = parse_program() 
     program.eval({})              
-    print ENV
+    print ENV.keys()
 
 if __name__ == "__main__":
     main()
