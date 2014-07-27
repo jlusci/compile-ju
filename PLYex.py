@@ -2,7 +2,7 @@
 # PLYex.py
 #
 # new tokenizer that uses PLY for lexing instead of splitting 
-# on whitespace - will use in combination with drj_parser.py
+# on whitespace - will use in combination with drjb_parser.py
 # ------------------------------------------------------------
 import ply.lex as lex
 import sys
@@ -116,7 +116,8 @@ def t_error(t):
 # Build the lexer
 #lexer = lex.lex(optimize=1,lextab="test1") #builds lexer and file 
 #"test1" containing all regular expressions, disables most error checking
-lexer = lex.lex(debug=1)
+# lexer = lex.lex(debug=1)  #debug on
+lexer = lex.lex()
 
 # Test it out
 data = '''
@@ -142,9 +143,6 @@ while True:
     if not tok: break      # No more input
     # print tok.type, tok.value, tok.lineno, tok.lexpos
     tokenlist.append(tok)
-    # print tok, type(tok)
-
-
 
 # lex.py comes with a simple main function - use this to get tuples list
 # if __name__ == '__main__':
