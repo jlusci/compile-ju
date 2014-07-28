@@ -1,7 +1,7 @@
 function main() {
 	print "Hello world";
-	print 3+3;
-	var x = 3;
+	print 3+-3;
+	var x = -3.5;
 	print x;
 	print x+5*9;
 	var x = x+3;
@@ -15,7 +15,7 @@ function main() {
 	} else {
 		print "no, x mod 5 is not zero";
 	}
-	for (var i = 0; i <= 5; i = i + 1) {
+	for (var i = 0; i <= 2; i = i + 1) {
 		print i;
 	}
 }

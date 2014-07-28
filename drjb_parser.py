@@ -22,9 +22,9 @@ class ProgramNode(NodeTemplate):
 
     def eval(self, env):
         for fn in self.functions:
-            fn.eval(env)
-            # if fn.name == "main":
-            #     fn.eval(env)
+            # fn.eval(env)
+            if fn.name == "main":
+                fn.eval(env)
 
 class FunctionNode(NodeTemplate):
     def __init__(self, name, args, body):
@@ -173,6 +173,13 @@ class StringNode(NodeTemplate):
         return self.val
 
 class IntNode(NodeTemplate):
+    def __init__(self, val):
+        self.val = val
+
+    def eval(self, env):
+        return self.val
+
+class FloatNode(NodeTemplate):
     def __init__(self, val):
         self.val = val
 
@@ -388,6 +395,9 @@ def parse_factor():
     if token.type == "NUMBER": 
         tokens.pop(0)
         return IntNode(token.value)
+    elif token.type == "FLOAT":
+        tokens.pop(0)
+        return FloatNode(token.value)
     elif token.type == "ID":
         tokens.pop(0)
         return IDNode(token.value)
@@ -472,7 +482,7 @@ def parse_list():
     while tokens[0].value != "]":
         if tokens[0].value == ',':
             tokens.pop(0)
-        contents.append(atom(tokens[0].value))
+        contents.append(tokens[0].value)  #don't need atom()
         tokens.pop(0)
     expect("]")
     return contents
@@ -483,7 +493,7 @@ def parse_dict():
     while tokens[0].value != "}":
         if tokens[0].value == ",":
             tokens.pop(0)
-        dictcontents[atom(tokens[0].value)] = atom(tokens[2].value)
+        dictcontents[tokens[0].value] = tokens[2].value    #don't need atom()
         # tokens = tokens[3:]
         tokens.pop(0)
         tokens.pop(0)
@@ -501,9 +511,9 @@ def parse_dict():
 #     # return " ".join(contents)
 #     str_obj = StringNode()
 
-def atom(var):
-    try: return int(var)
-    except: return str(var)
+# def atom(var):
+#     try: return int(var)
+#     except: return str(var)
 
 def emit_all():
     for fn in ENV.keys():
@@ -530,7 +540,7 @@ def main():
         # # appends ONLY list of values
         # tokens.append(tokenlist[item].value)
 
-    # print "HERE ARE MY TOKENS:", tokenlist         #check tokenlist
+    # print "HERE ARE MY TOKENS:", tokens         #check tokens list
 
     program = parse_program() 
     program.eval({})              

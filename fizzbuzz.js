@@ -19,7 +19,7 @@ function fizzbuzz() {
 	}
 }
 
-function test() {
+function main() {
 	print "test";
 	fizzbuzz();
 	print "did I run fizzbuzz() twice?";
