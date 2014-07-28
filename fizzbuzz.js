@@ -22,5 +22,5 @@ function fizzbuzz() {
 function main() {
 	print "test";
 	fizzbuzz();
-	print "did I run fizzbuzz() twice?";
+	print "did I run fizzbuzz()?";
 }

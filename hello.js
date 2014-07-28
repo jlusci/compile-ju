@@ -1,7 +1,7 @@
 function main() {
 	print "Hello world";
 	print 3+-3;
-	var x = -3.5;
+	var x = 2;
 	print x;
 	print x+5*9;
 	var x = x+3;
@@ -17,5 +17,9 @@ function main() {
 	}
 	for (var i = 0; i <= 2; i = i + 1) {
 		print i;
+	}
+	while (x < 10){
+		print x;
+		x = x+1;
 	}
 }

@@ -155,6 +155,18 @@ class ForNode(NodeTemplate):
             self.block.eval(env)
             self.third.eval(env)
 
+class WhileNode(NodeTemplate):
+    def __init__(self,cond,block):
+        self.cond = cond
+        self.block = block
+
+    def emit(self):
+        pass
+
+    def eval(self,env):
+        while self.cond.eval(env):
+            self.block.eval(env)
+
 class PrintNode(NodeTemplate):
     def __init__(self,first):
         self.first = first
@@ -269,6 +281,8 @@ def parse_statement():
         return parse_variable_def()
     elif tokens[0].value == "for":
         return parse_for()
+    elif tokens[0].value == "while":
+        return parse_while()
     elif tokens[0].value == "if":
         return parse_if()
     elif tokens[0].value == "print":
@@ -323,7 +337,9 @@ def parse_variable_def():
 # FACTOR : INT | ID | '(' EXPR ')' ;
 
 def parse_expression():
-    if tokens[0].value == "[":
+    if tokens[0].type == "LAMBDA":
+        pass
+    elif tokens[0].value == "[":
         val = parse_list()
         return ListNode(val)
     elif tokens[0].value == "{":
@@ -425,6 +441,18 @@ def parse_for():
     #         "second": n2,
     #         "third": n3,
     #         "block": block}
+
+def parse_while():
+    expect("while")
+    expect("(")
+    n1 = parse_expression()
+    expect(")")
+    expect("{")
+    block = parse_block()
+
+    while_obj = WhileNode(n1,block)
+    while_obj.emit()
+    return while_obj
 
 def parse_if():
     # conseq = []
@@ -540,7 +568,7 @@ def main():
         # # appends ONLY list of values
         # tokens.append(tokenlist[item].value)
 
-    # print "HERE ARE MY TOKENS:", tokens         #check tokens list
+    print "HERE ARE MY TOKENS:", tokens         #check tokens list
 
     program = parse_program() 
     program.eval({})              
