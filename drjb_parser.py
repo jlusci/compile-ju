@@ -281,8 +281,6 @@ def parse_statement():
         return parse_variable_def()
     elif tokens[0].value == "for":
         return parse_for()
-    elif tokens[0].value == "while":
-        return parse_while()
     elif tokens[0].value == "if":
         return parse_if()
     elif tokens[0].value == "print":
