@@ -1,4 +1,5 @@
 import sys
+import copy
 import PLYex
 from PLYex import tokenlist as tokens
 import ply.lex as lex
@@ -7,7 +8,15 @@ import ply.lex as lex
 
 mathop_list = ['<','>','==','<=','>=','!=']
 
-ENV = {}
+global_ENV = {}
+
+class Env(dict):
+    def __init__(self, parms=(), args=(), outer=None):
+        self.update(zip(parms, args))
+        self.outer = outer
+    def find(self, var):
+        "Find the innermost Env where var appears."
+        return self if var in self else self.outer.find(var)
 
 class NodeTemplate(object):
     pass
@@ -27,9 +36,9 @@ class ProgramNode(NodeTemplate):
                 fn.eval(env)
 
 class FunctionNode(NodeTemplate):
-    def __init__(self, name, args, body):
+    def __init__(self, name, params, body):
         self.name = name
-        self.args = args
+        self.params = params
         self.body = body
 
     def emit(self):
@@ -37,7 +46,36 @@ class FunctionNode(NodeTemplate):
         self.body.emit()
 
     def eval(self, env):
+        self.params.eval(env)        
         self.body.eval(env)
+
+class ParamsNode(NodeTemplate):
+    def __init__(self, params):
+        self.params = params
+
+    def emit(self):
+        pass
+
+    def eval(self, env):
+        for param in self.params:
+            # print "parameter in function definition:", param.name
+            # print "*****", param.eval(env)
+            param.eval(env)
+
+class ArgsNode(NodeTemplate):
+    def __init__(self, args):
+        self.args = args
+
+    def emit(self):
+        # for arg in self.args:
+        #     arg.emit()
+        pass
+
+    def eval(self, env):
+        for arg in self.args:
+            # print "argument of function call:", arg.val
+            # print "@@@@@@@", arg.eval(env)
+            arg.eval(env)
 
 class BlockNode(NodeTemplate):
     def __init__(self, lines):
@@ -50,6 +88,25 @@ class BlockNode(NodeTemplate):
     def eval(self, env):
         for line in self.lines:
             line.eval(env)
+
+class CallNode(NodeTemplate):
+    def __init__(self, fn, args):
+        self.fn = fn
+        self.args = args
+
+    def eval(self, env):
+        paramlist = []
+        arglist = []
+        fn_call = global_ENV[self.fn.name]
+        params = fn_call.params
+        # print params.params
+        for param in params.params:
+            paramlist.append(param.name)
+        for arg in self.args.args:
+            arglist.append(arg.val)
+        new_env = Env(paramlist, arglist, env)        
+        fn_call.eval(new_env)
+        # copy.deepcopy(global_ENV)
 
 class AssignNode(NodeTemplate):
     def __init__(self, first, second):
@@ -120,7 +177,6 @@ class IfNode(NodeTemplate):
         self.third = third
 
     def emit(self):
-    # def emit_ifnode(self):
         print "     if", self.first.first, self.first.op, self.first.second,":"
         print "        ", 
         # for item in self.second:
@@ -142,12 +198,6 @@ class ForNode(NodeTemplate):
 
     def emit(self):
         pass
-        # print self.first.first.name, self.first.second.val
-        # print self.second.first.name, self.second.op, self.second.second.val
-        # print self.third.first, self.third.second.first.name, self.third.second.op, \
-        # self.third.second.second.val
-        # for line in self.block.lines:
-        #     print "*****", line.first.name  #ID node has .name attribute
 
     def eval(self, env):
         self.first.eval(env)
@@ -239,21 +289,11 @@ def parse_program():
 def parse_function():
     name = parse_id().name
     print "OUR FUNCTION IS CALLED:", name
-    args = parse_args()
+    params = parse_params()
     body = parse_block()
 
-    # while tokens[0].value != "}":
-    #     body.append(parse_statement())   #fn body is a list of dictionaries
-    # expect("}")
-
-    fn_obj = FunctionNode(name,args,body)
-
-    # fn =  {"type": "function",
-    #         "name": name,
-    #         "args": args,
-    #         "body": body}
-
-    ENV[name] = fn_obj
+    fn_obj = FunctionNode(name,params,body)
+    global_ENV[name] = fn_obj
     return fn_obj
 
 def parse_id():
@@ -261,24 +301,31 @@ def parse_id():
     id_ = IDNode(name.value)
     return id_
 
-def parse_args():
+def parse_params():
+    paramslist = []
     expect("(")
-        # maybe put something in here?
+    while tokens[0].value != ")":
+        if tokens[0].value == ",":
+            tokens.pop(0)
+        paramslist.append(parse_id())
     expect(")")
     expect("{")
-    return []
+    params_obj = ParamsNode(paramslist)
+    return params_obj
 
 def parse_block():
     lines = []
     while tokens[0].value != "}":
         lines.append(parse_statement())
     expect("}")
-    block = BlockNode(lines)
-    return block 
+    block_obj = BlockNode(lines)
+    return block_obj 
 
 def parse_statement():
     if tokens[0].value == "var":
         return parse_variable_def()
+    elif tokens[0].value == "while":
+        return parse_while()
     elif tokens[0].value == "for":
         return parse_for()
     elif tokens[0].value == "if":
@@ -292,39 +339,42 @@ def parse_statement():
     else:
         token = tokens[0].value
         # token = token[:-2]
-        if token in ENV.keys():
+        if token in global_ENV.keys():
             token = tokens.pop(0)
             fn_token = token.value
-            fn_obj = ENV[fn_token]
-            expect("(")
-            expect(")")
+            fn_obj = global_ENV[fn_token]
+            val = parse_args()
+            fn_call_obj = CallNode(fn_obj, val)
             expect(";")
-            return fn_obj
-            # print "THIS FUNCTION CALLS THE FUNCTION:", fn_token
-            # return {"name": fn_token,
-            #         "type": "function call"}
+            print "THIS FUNCTION CALLS THE FUNCTION:", fn_token            
+            return fn_call_obj
         raise Exception("WTF ", tokens[0].value, "IS NOT A KEYWORD. Error on line:",
             tokens[0].lineno)
+
+def parse_args():
+    argslist = []
+    expect("(")
+    while tokens[0].value != ")":
+        if tokens[0].value == ",":
+            tokens.pop(0)
+        argslist.append(parse_nums())
+    expect(")")
+    args_obj = ArgsNode(argslist)
+    return args_obj  
+
+def parse_nums():
+    parm = tokens.pop(0)
+    num = IntNode(parm.value)
+    return num      
 
 def parse_variable_def():
     expect("var")
     var_name = parse_id()
     expect("=")
-    # if tokens[0].value == "[":
-    #     val = parse_list()
-    # elif tokens[0].value == "{":
-    #     val = parse_dict()    
-    # else:
     val = parse_expression()    
     expect(";")
     assign_obj = AssignNode(var_name,val)
-    # assign_obj.emit_expr()
     return assign_obj
-    # return {"type": "assign_expr",
-    #             "first": {"type": "id_expr",
-    #                     "val": var_name},
-    #             "second": {"type": "eval_expr",
-    #                     "val": val}}
 
 # EXPR : FACTOR { ('+' | '-') EXPR } ;
 # FACTOR : INT | '(' EXPR ')' ;
@@ -357,12 +407,6 @@ def parse_expression():
 
         return op_obj
 
-        # return {"type": "op_expr",
-        #         "val": operator,
-        #         "first": {"type": "int_const_expr",
-        #                 "val": x},
-        #         "second": {"type": "int_const_expr",
-        #                 "val": y}}
     return x
 
 def parse_term():
@@ -376,15 +420,10 @@ def parse_term():
 
         return op_obj
 
-        # return {"type": "op_expr",
-        #         "val": operator,
-        #         "first": {"type": "int_const_expr",
-        #                 "val": x},
-        #         "second": {"type": "int_const_expr",
-        #                 "val": y}}
     return x
 
 def parse_mult():
+    # x = parse_fn_call()
     x = parse_factor()
     if tokens[0].value == '*' or tokens[0].value == '/' or tokens[0].value == '%':
         operator = tokens.pop(0)
@@ -395,13 +434,15 @@ def parse_mult():
 
         return op_obj
 
-        # return {"type": "op_expr",
-        #         "val": operator,
-        #         "first": {"type": "int_const_expr",
-        #                 "val": x},
-        #         "second": {"type": "int_const_expr",
-        #                 "val": y}}
     return x
+
+# def parse_fn_call():
+#     x = parse_factor()
+#     if tokens[0].value == '(':
+#         tokens.pop(0)        
+#         new_env = global_ENV
+#         fn_token = x
+#         fn_obj = new_env[fn_token.value]
 
 def parse_factor():
     token = tokens[0]
@@ -431,14 +472,9 @@ def parse_for():
     expect("{")
     block = parse_block()
 
-    for_obj = ForNode(n1,n2,n3,block)
-    for_obj.emit()
+    for_obj = ForNode(n1, n2, n3, block)
+    # for_obj.emit()
     return for_obj
-    # return {"type": "for",
-    #         "first": n1,
-    #         "second": n2,
-    #         "third": n3,
-    #         "block": block}
 
 def parse_while():
     expect("while")
@@ -448,13 +484,11 @@ def parse_while():
     expect("{")
     block = parse_block()
 
-    while_obj = WhileNode(n1,block)
-    while_obj.emit()
+    while_obj = WhileNode(n1, block)
+    # while_obj.emit()
     return while_obj
 
 def parse_if():
-    # conseq = []
-    # alt = []
     expect("if")
     expect("(")
     n1 = parse_expression()
@@ -468,17 +502,7 @@ def parse_if():
         alt = parse_block()
 
     if_obj = IfNode(n1,conseq,alt)
-    # print if_obj.first.first.first, if_obj.first.first.op, if_obj.first.first.second,\
-    # if_obj.first.op, if_obj.first.second
-    # print if_obj.second[0].first
-    # print "***** HERE IS MY ELSE STATEMENT:",if_obj.third[0].first
-    # print type(if_obj.third[0])
-    # print if_obj.eval()
     return if_obj
-    # return {"type": "if",
-    #         "first": n1,
-    #         "second": conseq,
-    #         "third": alt}
 
 def parse_print():
     expect("print")
@@ -489,18 +513,11 @@ def parse_print():
 
 def parse_var_assign():
     var_name = parse_id()
-    # var_name = tokens.pop(0)
-    # var_name = var_name.value
     expect("=")
     val = parse_expression()
     # expect(";")
     assign_obj = AssignNode(var_name,val)
-    return assign_obj
-    # return {"type": "assign_expr",
-    #             "first": {"type": "id_expr",
-    #                     "val": var_name},
-    #             "second": {"type": "eval_expr",
-    #                     "val": val}}     
+    return assign_obj   
 
 def parse_list():
     contents = []
@@ -542,8 +559,8 @@ def parse_dict():
 #     except: return str(var)
 
 def emit_all():
-    for fn in ENV.keys():
-        fn_obj = ENV[fn]
+    for fn in global_ENV.keys():
+        fn_obj = global_ENV[fn]
         fn_obj.emit()
         # fn_obj.body[1].second[0].eval()
         # for stmt in fn_obj.body:
@@ -570,7 +587,7 @@ def main():
 
     program = parse_program() 
     program.eval({})              
-    print ENV.keys()
+    print global_ENV.keys()
 
 if __name__ == "__main__":
     main()
