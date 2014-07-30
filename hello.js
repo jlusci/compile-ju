@@ -7,9 +7,11 @@ function main() {
 	var x = x+3;
 	print x;
 	var y = [1,2];
+	print y;
+//	y[0];
 	var dict = {'key':'value'};
 	print dict;
-	print y;
+//	dict['key'];
 	if (x % 5 == 0){
 		print "yes, x mod 5 is zero";
 	} else {
