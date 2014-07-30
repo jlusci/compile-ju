@@ -187,7 +187,10 @@ class IfNode(NodeTemplate):
         if result:
             return self.second.eval(env)
         else:
-            return self.third.eval(env)
+            if self.third:                      #if there is no else statement
+                return self.third.eval(env)
+            else:
+                return None
 
 class ForNode(NodeTemplate):
     def __init__(self, first, second, third, block):
@@ -269,6 +272,13 @@ class DictNode(NodeTemplate):
     def eval(self, env):
         return self.val
 
+class IndexNode(NodeTemplate):   #use this one for list/dict indexing
+    def __init__(self, val):
+        self.val = val
+
+    def eval(self, env):
+        pass
+
 def expect(thing_to_expect):
     token = tokens.pop(0)
     if token.value != thing_to_expect:
@@ -288,7 +298,7 @@ def parse_program():
             
 def parse_function():
     name = parse_id().name
-    print "OUR FUNCTION IS CALLED:", name
+    # print "OUR FUNCTION IS CALLED:", name
     params = parse_params()
     body = parse_block()
 
@@ -332,22 +342,19 @@ def parse_statement():
         return parse_if()
     elif tokens[0].value == "print":
         return parse_print()
-    elif tokens[0].type == "ID" and tokens[1].value != "(":
+    elif tokens[0].type == "ID" and tokens[1].value != "(" and tokens[1].value != "[":
         x = parse_var_assign()
         expect(";")
         return x
+    elif tokens[0].type == "ID" and tokens[1].value == "[":
+        return parse_index()
     else:
         token = tokens[0].value
         # token = token[:-2]
         if token in global_ENV.keys():
-            token = tokens.pop(0)
-            fn_token = token.value
-            fn_obj = global_ENV[fn_token]
-            val = parse_args()
-            fn_call_obj = CallNode(fn_obj, val)
+            x = parse_expression()
             expect(";")
-            print "THIS FUNCTION CALLS THE FUNCTION:", fn_token            
-            return fn_call_obj
+            return x
         raise Exception("WTF ", tokens[0].value, "IS NOT A KEYWORD. Error on line:",
             tokens[0].lineno)
 
@@ -382,6 +389,12 @@ def parse_variable_def():
 # EXPR : TERM { ('<' | '>' | '<=' | '>=' | '!=' | '=!') EXPR } ;
 # TERM : MULT { ('+' | '-') TERM } ;
 # MULT : FACTOR { ('*' | '/' | '%') MULT };
+# FACTOR : INT | ID | '(' EXPR ')' ;
+
+# EXPR : TERM { ('<' | '>' | '<=' | '>=' | '!=' | '=!') EXPR } ;
+# TERM : MULT { ('+' | '-') TERM } ;
+# MULT : FUNC { ('*' | '/' | '%') MULT };
+# FN_CALL : FACTOR { ('*' | '/' | '%') FN_CALL };
 # FACTOR : INT | ID | '(' EXPR ')' ;
 
 def parse_expression():
@@ -423,8 +436,8 @@ def parse_term():
     return x
 
 def parse_mult():
-    # x = parse_fn_call()
-    x = parse_factor()
+    x = parse_fn_call()
+    # x = parse_factor()
     if tokens[0].value == '*' or tokens[0].value == '/' or tokens[0].value == '%':
         operator = tokens.pop(0)
         operator = operator.value
@@ -436,13 +449,15 @@ def parse_mult():
 
     return x
 
-# def parse_fn_call():
-#     x = parse_factor()
-#     if tokens[0].value == '(':
-#         tokens.pop(0)        
-#         new_env = global_ENV
-#         fn_token = x
-#         fn_obj = new_env[fn_token.value]
+def parse_fn_call():
+    x = parse_factor()
+    if tokens[0].value == '(':
+        val = parse_args()
+        fn_call_obj = CallNode(x, val)
+        # expect(";")
+        # print "THIS FUNCTION CALLS THE FUNCTION:", fn_token            
+        return fn_call_obj
+    return x
 
 def parse_factor():
     token = tokens[0]
@@ -453,6 +468,11 @@ def parse_factor():
     elif token.type == "FLOAT":
         tokens.pop(0)
         return FloatNode(token.value)
+    elif token.type == "ID" and tokens[1].value == "(":
+        tokens.pop(0)
+        fn_token = token.value
+        fn_obj = global_ENV[fn_token]
+        return fn_obj
     elif token.type == "ID":
         tokens.pop(0)
         return IDNode(token.value)
@@ -517,7 +537,10 @@ def parse_var_assign():
     val = parse_expression()
     # expect(";")
     assign_obj = AssignNode(var_name,val)
-    return assign_obj   
+    return assign_obj 
+
+def parse_index():
+    pass  
 
 def parse_list():
     contents = []
@@ -583,10 +606,11 @@ def main():
         # # appends ONLY list of values
         # tokens.append(tokenlist[item].value)
 
-    print "HERE ARE MY TOKENS:", tokens         #check tokens list
+    # print "HERE ARE MY TOKENS:", tokens         #check tokens list
 
     program = parse_program() 
-    program.eval({})              
+    program.eval({})
+    # program.eval(global_ENV)
     print global_ENV.keys()
 
 if __name__ == "__main__":
