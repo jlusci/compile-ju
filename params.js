@@ -8,6 +8,7 @@ function foo(a) {
 function main() {
     print "here is where i call foo from main";
     print "begin test";
-    foo(5);
+    var y = foo(5);
+    print y;
     print "end test";
 }
