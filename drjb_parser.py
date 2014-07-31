@@ -102,7 +102,7 @@ class CallNode(NodeTemplate):
         # print params.params
         for param in params.params:
             paramlist.append(param.name)
-        for arg in self.args.args:
+        for arg in self.args:
             arglist.append(arg.name)
         new_env = Env(paramlist, arglist, env)        
         fn_call.eval(new_env)
@@ -115,13 +115,8 @@ class IndexNode(NodeTemplate):
 
     def eval(self, env):
         look_up = env[self.var.name]
-        if type(look_up) == dict:
-        # if type(self.val.name) == str:
-            target = look_up.get(self.val.name)
-            return target
-        if type(look_up) == list:
-            target = look_up[self.val.name]
-            return target
+        target = look_up[self.val.list_of_objects[0].eval(env)]
+        return target
 
 class AssignNode(NodeTemplate):
     def __init__(self, first, second):
@@ -224,7 +219,7 @@ class ForNode(NodeTemplate):
             self.third.eval(env)
 
 class WhileNode(NodeTemplate):
-    def __init__(self,cond,block):
+    def __init__(self, cond, block):
         self.cond = cond
         self.block = block
 
@@ -236,7 +231,7 @@ class WhileNode(NodeTemplate):
             self.block.eval(env)
 
 class PrintNode(NodeTemplate):
-    def __init__(self,first):
+    def __init__(self, first):
         self.first = first
 
     def emit(self):
@@ -246,18 +241,18 @@ class PrintNode(NodeTemplate):
         print self.first.eval(env)
 
 class StringNode(NodeTemplate):
-    def __init__(self,val):
+    def __init__(self, val):
         self.val = val 
 
     def eval(self, env):
         return self.val
 
 class IntNode(NodeTemplate):
-    def __init__(self, val):
-        self.val = val
+    def __init__(self, name):
+        self.name = name
 
     def eval(self, env):
-        return self.val
+        return self.name
 
 class FloatNode(NodeTemplate):
     def __init__(self, val):
@@ -273,13 +268,6 @@ class IDNode(NodeTemplate):
     def eval(self, env):
         return env.get(self.name)
 
-class ValNode(NodeTemplate):
-    def __init__(self, name):
-        self.name = name
-
-    def eval(self, env):
-        return self.val
-
 class ListNode(NodeTemplate):
     def __init__(self, list_of_objects):
         self.list_of_objects = list_of_objects 
@@ -291,11 +279,14 @@ class ListNode(NodeTemplate):
         return contents
 
 class DictNode(NodeTemplate):
-    def __init__(self, val):
-        self.val = val 
+    def __init__(self, vals):
+        self.vals = vals
 
     def eval(self, env):
-        return self.val
+        dictcontents = {}
+        for key in self.vals.keys():
+            dictcontents[key.eval(env)] = self.vals.get(key).eval(env)
+        return dictcontents
 
 def expect(thing_to_expect):
     token = tokens.pop(0)
@@ -381,19 +372,14 @@ def parse_statement():
 
 def parse_args():
     argslist = []
-    expect("(")
+    tokens.pop(0)
     while tokens[0].value != ")":
         if tokens[0].value == ",":
             tokens.pop(0)
-        argslist.append(parse_vals())
+        arg = parse_expression()
+        argslist.append(arg)
     expect(")")
-    args_obj = ArgsNode(argslist)
-    return args_obj 
-
-def parse_vals():
-    token = tokens.pop(0)
-    val = ValNode(token.value)
-    return val
+    return argslist
 
 def parse_variable_def():
     expect("var")
@@ -422,8 +408,7 @@ def parse_expression():
     if tokens[0].value == "[":
         return parse_list()
     elif tokens[0].value == "{":
-        val = parse_dict()
-        return DictNode(val)
+        return parse_dict()
     elif tokens[0].type == "STRING":
         token = tokens.pop(0)
         return StringNode(token.value)
@@ -470,28 +455,11 @@ def parse_mult():
 def parse_call():
     x = parse_factor()
     if tokens[0].value == '(':
-        # argslist = []
-        # tokens.pop(0)
-        # while tokens[0].value != ")":
-        #     if tokens[0].value == ",":
-        #         tokens.pop(0)
-        #     arg = parse_expression()
-        #     argslist.append(arg)
-        # expect(")")
-        # fn_call_obj = CallNode(x, argslist)
         val = parse_args()
         fn_call_obj = CallNode(x, val)
-        # expect(";")
-        # print "THIS FUNCTION CALLS THE FUNCTION:", fn_token            
         return fn_call_obj
-    # elif tokens[0].value == '[':
-    #     val = parse_list_args()
-    #     call_obj = ListIndexNode(x, val)
-    #     return call_obj
     elif tokens[0].value == '[':
-        expect("[")
-        val = parse_vals()
-        expect("]")
+        val = parse_list()
         call_obj = IndexNode(x, val)
         return call_obj
     return x
@@ -572,13 +540,12 @@ def parse_var_assign():
     var_name = parse_id()
     expect("=")
     val = parse_expression()
-    # expect(";")
     assign_obj = AssignNode(var_name,val)
     return assign_obj  
 
 def parse_list():
     list_of_objects = []
-    tokens.pop(0)
+    expect("[")
     while tokens[0].value != "]":
         if tokens[0].value == ",":
             tokens.pop(0)
@@ -591,15 +558,14 @@ def parse_dict():
     dictcontents = {}
     expect("{")
     while tokens[0].value != "}":
-        if tokens[0].value == ",":
+        if tokens[0].value == ",": 
             tokens.pop(0)
-        dictcontents[tokens[0].value] = tokens[2].value    #don't need atom()
-        # tokens = tokens[3:]
-        tokens.pop(0)
-        tokens.pop(0)
-        tokens.pop(0)
+        key = parse_expression()
+        expect(":")
+        value = parse_expression()
+        dictcontents[key] = value
     expect("}")
-    return dictcontents
+    return DictNode(dictcontents)
 
 # def parse_str():
 #     # contents = []
