@@ -87,7 +87,7 @@ def t_EOLCOMMENT(t):
 
 # A regular expression rule with some action code
 def t_STRING(t):
-    # r'["\'][a-zA-Z0-9]*["\']'
+    # r'["\'][a-zA-Z0-9]*["\']'     add more special characters to string tokens?
     r'["\'][\s\w\,\.\(\)\?]*["\']'
     t.value = t.value.strip('"\'')
     return t
