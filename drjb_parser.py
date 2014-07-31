@@ -103,10 +103,25 @@ class CallNode(NodeTemplate):
         for param in params.params:
             paramlist.append(param.name)
         for arg in self.args.args:
-            arglist.append(arg.val)
+            arglist.append(arg.name)
         new_env = Env(paramlist, arglist, env)        
         fn_call.eval(new_env)
         # copy.deepcopy(global_ENV)
+
+class IndexNode(NodeTemplate):
+    def __init__(self, var, val):
+        self.var = var
+        self.val = val
+
+    def eval(self, env):
+        look_up = env[self.var.name]
+        if type(look_up) == dict:
+        # if type(self.val.name) == str:
+            target = look_up.get(self.val.name)
+            return target
+        if type(look_up) == list:
+            target = look_up[self.val.name]
+            return target
 
 class AssignNode(NodeTemplate):
     def __init__(self, first, second):
@@ -258,6 +273,13 @@ class IDNode(NodeTemplate):
     def eval(self, env):
         return env.get(self.name)
 
+class ValNode(NodeTemplate):
+    def __init__(self, name):
+        self.name = name
+
+    def eval(self, env):
+        return self.val
+
 class ListNode(NodeTemplate):
     def __init__(self, val):
         self.val = val 
@@ -271,13 +293,6 @@ class DictNode(NodeTemplate):
 
     def eval(self, env):
         return self.val
-
-class IndexNode(NodeTemplate):   #use this one for list/dict indexing
-    def __init__(self, val):
-        self.val = val
-
-    def eval(self, env):
-        pass
 
 def expect(thing_to_expect):
     token = tokens.pop(0)
@@ -347,7 +362,10 @@ def parse_statement():
         expect(";")
         return x
     elif tokens[0].type == "ID" and tokens[1].value == "[":
-        return parse_index()
+        # print global_ENV.find(tokens[0].value)[tokens[0].value]
+        x = parse_expression()
+        expect(";")
+        return x
     else:
         token = tokens[0].value
         # token = token[:-2]
@@ -364,15 +382,15 @@ def parse_args():
     while tokens[0].value != ")":
         if tokens[0].value == ",":
             tokens.pop(0)
-        argslist.append(parse_nums())
+        argslist.append(parse_vals())
     expect(")")
     args_obj = ArgsNode(argslist)
-    return args_obj  
+    return args_obj 
 
-def parse_nums():
-    parm = tokens.pop(0)
-    num = IntNode(parm.value)
-    return num      
+def parse_vals():
+    token = tokens.pop(0)
+    val = ValNode(token.value)
+    return val
 
 def parse_variable_def():
     expect("var")
@@ -394,13 +412,11 @@ def parse_variable_def():
 # EXPR : TERM { ('<' | '>' | '<=' | '>=' | '!=' | '=!') EXPR } ;
 # TERM : MULT { ('+' | '-') TERM } ;
 # MULT : FUNC { ('*' | '/' | '%') MULT };
-# FN_CALL : FACTOR { ('*' | '/' | '%') FN_CALL };
+# CALL : FACTOR { ('*' | '/' | '%') CALL };
 # FACTOR : INT | ID | '(' EXPR ')' ;
 
 def parse_expression():
-    if tokens[0].type == "LAMBDA":
-        pass
-    elif tokens[0].value == "[":
+    if tokens[0].value == "[":
         val = parse_list()
         return ListNode(val)
     elif tokens[0].value == "{":
@@ -436,7 +452,7 @@ def parse_term():
     return x
 
 def parse_mult():
-    x = parse_fn_call()
+    x = parse_call()
     # x = parse_factor()
     if tokens[0].value == '*' or tokens[0].value == '/' or tokens[0].value == '%':
         operator = tokens.pop(0)
@@ -449,7 +465,7 @@ def parse_mult():
 
     return x
 
-def parse_fn_call():
+def parse_call():
     x = parse_factor()
     if tokens[0].value == '(':
         val = parse_args()
@@ -457,6 +473,16 @@ def parse_fn_call():
         # expect(";")
         # print "THIS FUNCTION CALLS THE FUNCTION:", fn_token            
         return fn_call_obj
+    # elif tokens[0].value == '[':
+    #     val = parse_list_args()
+    #     call_obj = ListIndexNode(x, val)
+    #     return call_obj
+    elif tokens[0].value == '[':
+        expect("[")
+        val = parse_vals()
+        expect("]")
+        call_obj = IndexNode(x, val)
+        return call_obj
     return x
 
 def parse_factor():
@@ -473,7 +499,7 @@ def parse_factor():
         fn_token = token.value
         fn_obj = global_ENV[fn_token]
         return fn_obj
-    elif token.type == "ID":
+    elif token.type == "ID": # and tokens[1].value == "[":
         tokens.pop(0)
         return IDNode(token.value)
     expect("(")  
@@ -537,10 +563,7 @@ def parse_var_assign():
     val = parse_expression()
     # expect(";")
     assign_obj = AssignNode(var_name,val)
-    return assign_obj 
-
-def parse_index():
-    pass  
+    return assign_obj  
 
 def parse_list():
     contents = []
