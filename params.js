@@ -1,5 +1,6 @@
 function foo(a) {
     print "this is inside foo";
+    print "aww yeah. ¢ra§y ©hàræçtër$? ñø ¶rõßlem$!";
     print a;
     x = a + 5*9+1;
     print x;

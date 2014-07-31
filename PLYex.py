@@ -17,7 +17,8 @@ reserved = {
    'for' : 'FOR',
    'while': 'WHILE',
    'var' : 'VAR',
-   'print': 'PRINT'
+   'print': 'PRINT',
+   'return': 'RETURN'
    }
 
 # List of token names.   
@@ -88,7 +89,8 @@ def t_EOLCOMMENT(t):
 # A regular expression rule with some action code
 def t_STRING(t):
     # r'["\'][a-zA-Z0-9]*["\']'     add more special characters to string tokens?
-    r'["\'][\s\w\,\.\(\)\?]*["\']'
+    # r'["\'][\s\w\,\.\(\)\?]*["\']'
+    r'["\'].*?["\']'
     t.value = t.value.strip('"\'')
     return t
 
