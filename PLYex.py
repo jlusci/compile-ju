@@ -17,8 +17,7 @@ reserved = {
    'for' : 'FOR',
    'while': 'WHILE',
    'var' : 'VAR',
-   'print': 'PRINT',
-   'lambda': 'LAMBDA'
+   'print': 'PRINT'
    }
 
 # List of token names.   
