@@ -62,21 +62,6 @@ class ParamsNode(NodeTemplate):
             # print "*****", param.eval(env)
             param.eval(env)
 
-class ArgsNode(NodeTemplate):
-    def __init__(self, args):
-        self.args = args
-
-    def emit(self):
-        # for arg in self.args:
-        #     arg.emit()
-        pass
-
-    def eval(self, env):
-        for arg in self.args:
-            # print "argument of function call:", arg.val
-            # print "@@@@@@@", arg.eval(env)
-            arg.eval(env)
-
 class BlockNode(NodeTemplate):
     def __init__(self, lines):
         self.lines = lines
@@ -231,14 +216,20 @@ class WhileNode(NodeTemplate):
             self.block.eval(env)
 
 class PrintNode(NodeTemplate):
-    def __init__(self, first):
-        self.first = first
+    def __init__(self, lines):
+        self.lines = lines
 
-    def emit(self):
-        print "print", self.first
+    def emit(self, env):
+        for line in self.lines:
+            print "print", line.eval(env)
 
     def eval(self, env):
-        print self.first.eval(env)
+        if len(self.lines) == 1:
+            print self.lines[0].eval(env)
+        else:
+            for item in range(len(self.lines)-1):
+                print self.lines[item].eval(env),
+            print self.lines[-1].eval(env)          #beth fixed this
 
 class StringNode(NodeTemplate):
     def __init__(self, val):
@@ -351,22 +342,31 @@ def parse_statement():
         return parse_if()
     elif tokens[0].value == "print":
         return parse_print()
-    elif tokens[0].type == "ID" and tokens[1].value != "(" and tokens[1].value != "[":
+    elif tokens[0].type == "ID" and tokens[1].value == "=":#tokens[1].value != "(" and tokens[1].value != "[":
         x = parse_var_assign()
         expect(";")
         return x
-    elif tokens[0].type == "ID" and tokens[1].value == "[":
+    elif tokens[0].type == "NUMBER" or tokens[0].type == "FLOAT":# and tokens[1].value == "[":
         # print global_ENV.find(tokens[0].value)[tokens[0].value]
         x = parse_expression()
         expect(";")
         return x
+    elif tokens[0].type == "ID":
+        x = parse_expression()
+        expect(";")
+        return x        
+    # else:
+    #     token = tokens[0].value
+    #     # token = token[:-2]
+    #     if token in global_ENV.keys():
+    #         x = parse_expression()
+    #         expect(";")
+    #         return x
+    #     else:
+    #         x = parse_expression()
+    #         expect(";")
+    #         return x
     else:
-        token = tokens[0].value
-        # token = token[:-2]
-        if token in global_ENV.keys():
-            x = parse_expression()
-            expect(";")
-            return x
         raise Exception("WTF ", tokens[0].value, "IS NOT A KEYWORD. Error on line:",
             tokens[0].lineno)
 
@@ -526,21 +526,26 @@ def parse_if():
         expect("{")
         alt = parse_block()
 
-    if_obj = IfNode(n1,conseq,alt)
+    if_obj = IfNode(n1, conseq, alt)
     return if_obj
 
 def parse_print():
+    printcontents = []
     expect("print")
-    val = parse_expression()
-    print_obj = PrintNode(val)
+    while tokens[0].value != ";":
+        if tokens[0].value == ",":
+            tokens.pop(0)
+        val = parse_expression()
+        printcontents.append(val)
     expect(";")
+    print_obj = PrintNode(printcontents)
     return print_obj
 
 def parse_var_assign():
     var_name = parse_id()
     expect("=")
     val = parse_expression()
-    assign_obj = AssignNode(var_name,val)
+    assign_obj = AssignNode(var_name, val)
     return assign_obj  
 
 def parse_list():
@@ -606,7 +611,7 @@ def main():
         # # appends ONLY list of values
         # tokens.append(tokenlist[item].value)
 
-    # print "HERE ARE MY TOKENS:", tokens         #check tokens list
+    print "HERE ARE MY TOKENS:", tokens         #check tokens list
 
     program = parse_program() 
     program.eval({})
