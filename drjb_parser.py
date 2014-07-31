@@ -281,11 +281,14 @@ class ValNode(NodeTemplate):
         return self.val
 
 class ListNode(NodeTemplate):
-    def __init__(self, val):
-        self.val = val 
+    def __init__(self, list_of_objects):
+        self.list_of_objects = list_of_objects 
 
     def eval(self, env):
-        return self.val
+        contents = []
+        for item in self.list_of_objects:
+            contents.append(item.eval(env))
+        return contents
 
 class DictNode(NodeTemplate):
     def __init__(self, val):
@@ -417,8 +420,7 @@ def parse_variable_def():
 
 def parse_expression():
     if tokens[0].value == "[":
-        val = parse_list()
-        return ListNode(val)
+        return parse_list()
     elif tokens[0].value == "{":
         val = parse_dict()
         return DictNode(val)
@@ -468,6 +470,15 @@ def parse_mult():
 def parse_call():
     x = parse_factor()
     if tokens[0].value == '(':
+        # argslist = []
+        # tokens.pop(0)
+        # while tokens[0].value != ")":
+        #     if tokens[0].value == ",":
+        #         tokens.pop(0)
+        #     arg = parse_expression()
+        #     argslist.append(arg)
+        # expect(")")
+        # fn_call_obj = CallNode(x, argslist)
         val = parse_args()
         fn_call_obj = CallNode(x, val)
         # expect(";")
@@ -495,8 +506,8 @@ def parse_factor():
         tokens.pop(0)
         return FloatNode(token.value)
     elif token.type == "ID" and tokens[1].value == "(":
-        tokens.pop(0)
         fn_token = token.value
+        tokens.pop(0)
         fn_obj = global_ENV[fn_token]
         return fn_obj
     elif token.type == "ID": # and tokens[1].value == "[":
@@ -566,15 +577,15 @@ def parse_var_assign():
     return assign_obj  
 
 def parse_list():
-    contents = []
-    expect("[")
+    list_of_objects = []
+    tokens.pop(0)
     while tokens[0].value != "]":
-        if tokens[0].value == ',':
+        if tokens[0].value == ",":
             tokens.pop(0)
-        contents.append(tokens[0].value)  #don't need atom()
-        tokens.pop(0)
+        val = parse_expression()
+        list_of_objects.append(val)
     expect("]")
-    return contents
+    return ListNode(list_of_objects)
 
 def parse_dict():
     dictcontents = {}
