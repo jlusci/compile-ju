@@ -1,5 +1,5 @@
-function fizzbuzz(m) {
-    for(var n = 1; n <= m; n = n+1){
+function fizzbuzz(l, m) {
+    for(var n = l; n <= m; n = n+1){
         if (n % 15 == 0) {
 			print "FizzBuzz";
 		}
@@ -20,7 +20,8 @@ function fizzbuzz(m) {
 }
 
 function main() {
+    var l = 90;
 	print "test";
-	fizzbuzz(1000);
+	fizzbuzz(90, 100);
 	print "did I run fizzbuzz()?";
 }
