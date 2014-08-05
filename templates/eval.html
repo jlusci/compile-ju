@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block body %}
+
+<h2>Welcome to the pretty (functional) interface for my language. Type the script that you would like to evaluate into the box on the left and hit submit when you are ready to interpret!</h2>
+	<h4>
+	<div id="allinput">
+		<div id="div1">
+			<!-- <form method="POST" action="">
+        		<textarea name="intext" rows="20" cols="50"> -->
+                    {% for line in intext %}
+                    <p>{{line}}</p>
+                    {% endfor %}
+<!--                  </textarea> -->
+        		<!-- <p><button name="sub_button" type="submit">Submit!</button></p> -->
+<!--         	<p><button name="inter_button">Interpret</button><p>
+        		<p><button name="asm_button">Show me ASM!</button><p> -->
+    		</form>
+    	</div>
+    	<div id="div2">
+            <!-- <form>
+                <textarea name="outtext" rows="20" cols="60" autofocus> -->
+                    {% for line in outtext %}
+                    <p>{{line}}</p>
+                    {% endfor %}
+                <!-- </textarea>
+            </form> -->
+        </div>
+</div>
+</div>
+<!--     		<form method="POST" action"">
+    			<p><label></label><textarea name="outtext" rows="30" cols="60" placeholder="Evaluated script goes here." autofocus></textarea></p>
+		</div> -->
+</div>
+
+<script type="text/javascript">
+
+function clearContents(element) {
+  element.value = '';
+}
+
+$(main);
+
+</script>
+
+
+
+{% endblock %}
