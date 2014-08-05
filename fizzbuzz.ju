@@ -1,0 +1,28 @@
+function fizzbuzz_for(m) {
+    print "************************************";
+    print "We are going to print FizzBuzz!";
+    print "************************************";
+    for(var n = 1; n <= m; n = n+1){
+        if (n % 15 == 0) {
+			print "FizzBuzz";
+		}
+		else {
+            if (n % 3 == 0) {
+                print "Fizz";
+            }
+            else {
+                if(n % 5 == 0) {
+                    print "Buzz";
+                }
+                else {
+                    print n;
+                }
+            }
+		}
+	}
+    print "************************************";
+}
+
+function main() {
+	fizzbuzz_for(100);
+}

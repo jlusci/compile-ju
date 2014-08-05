@@ -1,10 +1,9 @@
 import sys
-import copy
 import PLYex
-from PLYex import tokenlist as tokens
+import os
 import ply.lex as lex
 
-# tokens = []
+tokens = []
 
 mathop_list = ['<','>','==','<=','>=','!=']
 
@@ -25,9 +24,10 @@ class ProgramNode(NodeTemplate):
     def __init__(self, functions):
         self.functions = functions
 
-    def emit(self):
+    def emit(self, env):
         for function in self.functions:
-            function.emit()
+            # print function.name
+            function.emit(env)
 
     def eval(self, env):
         for fn in self.functions:
@@ -35,15 +35,22 @@ class ProgramNode(NodeTemplate):
             if fn.name == "main":
                 fn.eval(env)
 
+    def asm(self, env):        
+        # for fn in self.functions:
+        #     if fn.name == "main":
+        #         fn.eval(env)
+        print "msg     db      'Hello, world!', 0Ah"
+
 class FunctionNode(NodeTemplate):
     def __init__(self, name, params, body):
         self.name = name
         self.params = params
         self.body = body
 
-    def emit(self):
-        print "def", self.name+"():"
-        self.body.emit()
+    def emit(self, env):
+        print "def", self.name,#+"():"
+        self.params.emit(env)
+        self.body.emit(env)
 
     def eval(self, env):
         self.params.eval(env)        
@@ -53,22 +60,33 @@ class ParamsNode(NodeTemplate):
     def __init__(self, params):
         self.params = params
 
-    def emit(self):
-        pass
+    def emit(self, env):
+        print "(",
+        # if len(self.params) == 1:
+        #     print self.params[0].emit(env),
+        #     print "\b)"
+        # else:    
+        #     for item in range(len(self.params)-1):
+        #         self.params[item].emit(env),
+        #         print "\b,",
+        #     print "\b)",
+        for param in self.params:
+            param.emit(env),
+            # param.emit(env),
+        print "\b):"
 
     def eval(self, env):
         for param in self.params:
-            # print "parameter in function definition:", param.name
-            # print "*****", param.eval(env)
             param.eval(env)
 
 class BlockNode(NodeTemplate):
     def __init__(self, lines):
         self.lines = lines
 
-    def emit(self):
+    def emit(self, env):
+        # pass
         for line in self.lines:
-            line.emit()
+            line.emit(env)
 
     def eval(self, env):
         for line in self.lines:
@@ -78,6 +96,13 @@ class CallNode(NodeTemplate):
     def __init__(self, fn, args):
         self.fn = fn
         self.args = args
+
+    def emit(self, env):
+        print self.fn.name,
+        print "(",
+        for arg in self.args:
+            arg.emit(env),
+        print "\b)"
 
     def eval(self, env):
         paramlist = []
@@ -98,6 +123,12 @@ class IndexNode(NodeTemplate):
         self.var = var
         self.val = val
 
+    def emit(self, env):
+        self.var.emit(env),
+        print "=",
+        self.val.emit(env)
+        print
+
     def eval(self, env):
         look_up = env[self.var.name]
         target = look_up[self.val.list_of_objects[0].eval(env)]
@@ -108,8 +139,11 @@ class AssignNode(NodeTemplate):
         self.first = first
         self.second = second
         
-    def emit(self):
-        print "    ",self.first.name, "=", self.second
+    def emit(self, env):
+        self.first.emit(env)
+        print "=",
+        self.second.emit(env)
+        print
 
     def eval(self, env):
         env[self.first.name] = self.second.eval(env)
@@ -120,8 +154,10 @@ class OpNode(NodeTemplate):
         self.first = first
         self.second = second
 
-    def emit(self):
-        print "    ",self.first, self.op, self.second
+    def emit(self, env):
+        self.first.emit(env)
+        print self.op,
+        self.second.emit(env)
 
     def eval(self, env):
         if self.op == "+":
@@ -171,11 +207,14 @@ class IfNode(NodeTemplate):
         self.second = second
         self.third = third
 
-    def emit(self):
-        print "     if", self.first.first, self.first.op, self.first.second,":"
-        print "        ", 
-        # for item in self.second:
-        #     print item.first, "=", item.second.first,item.second.op,item.second.second
+    def emit(self, env):
+        print "if",
+        self.first.emit(env),
+        print ":"
+        self.second.emit(env)
+        if self.third:
+            self.third.emit(env)
+        print
 
     def eval(self, env):
         result = self.first.eval(env)
@@ -194,8 +233,17 @@ class ForNode(NodeTemplate):
         self.third = third
         self.block = block
 
-    def emit(self):
-        pass
+    def emit(self, env):
+        self.first.first.emit(env),
+        print "=",
+        self.first.second.emit(env)
+        print
+        print "for",
+        self.first.first.emit(env)
+        print "in range(",
+        self.second.second.emit(env),
+        print "):"
+        self.block.emit(env)
 
     def eval(self, env):
         self.first.eval(env)
@@ -208,8 +256,13 @@ class WhileNode(NodeTemplate):
         self.cond = cond
         self.block = block
 
-    def emit(self):
-        pass
+    def emit(self, env):
+        print "while",
+        self.cond.emit(env),
+        print ":"
+        print
+        self.block.emit(env)
+        
 
     def eval(self,env):
         while self.cond.eval(env):
@@ -220,8 +273,16 @@ class PrintNode(NodeTemplate):
         self.lines = lines
 
     def emit(self, env):
+        # if len(self.lines) == 1:
+        #     print "print", self.lines[0].emit(env)
+        # else:
+        #     print "print",
+        #     for item in range(len(self.lines)-1):
+        #         print self.lines[item].emit(env),
+        #     print self.lines[-1].emit(env)
         for line in self.lines:
-            print "print", line.eval(env)
+            print "print", 
+            line.emit(env)
 
     def eval(self, env):
         if len(self.lines) == 1:
@@ -235,12 +296,18 @@ class StringNode(NodeTemplate):
     def __init__(self, val):
         self.val = val 
 
+    def emit(self, env):
+        print "\""+self.val+"\""
+
     def eval(self, env):
         return self.val
 
 class IntNode(NodeTemplate):
     def __init__(self, name):
         self.name = name
+
+    def emit(self, env):
+        print self.name,
 
     def eval(self, env):
         return self.name
@@ -249,6 +316,9 @@ class FloatNode(NodeTemplate):
     def __init__(self, val):
         self.val = val
 
+    def emit(self, env):
+        print self.val
+
     def eval(self, env):
         return self.val
 
@@ -256,12 +326,23 @@ class IDNode(NodeTemplate):
     def __init__(self, name):
         self.name = name
 
+    def emit(self, env):
+        print self.name,
+
     def eval(self, env):
         return env.get(self.name)
 
 class ListNode(NodeTemplate):
     def __init__(self, list_of_objects):
-        self.list_of_objects = list_of_objects 
+        self.list_of_objects = list_of_objects
+
+    def emit(self, env):
+        print "[",
+        for item in range(len(self.list_of_objects)-1):
+            self.list_of_objects[item].emit(env),
+            print "\b,",
+        self.list_of_objects[-1].emit(env),
+        print "\b]",
 
     def eval(self, env):
         contents = []
@@ -498,7 +579,7 @@ def parse_for():
     block = parse_block()
 
     for_obj = ForNode(n1, n2, n3, block)
-    # for_obj.emit()
+    
     return for_obj
 
 def parse_while():
@@ -510,7 +591,7 @@ def parse_while():
     block = parse_block()
 
     while_obj = WhileNode(n1, block)
-    # while_obj.emit()
+    
     return while_obj
 
 def parse_if():
@@ -572,51 +653,80 @@ def parse_dict():
     expect("}")
     return DictNode(dictcontents)
 
-# def parse_str():
-#     # contents = []
-#     # while tokens[0].value != ";":
-#     #     token = tokens.pop(0)
-#     #     token = token.value
-#     #     contents.append(token)
- 
-#     # return " ".join(contents)
-#     str_obj = StringNode()
-
-# def atom(var):
-#     try: return int(var)
-#     except: return str(var)
-
-def emit_all():
-    for fn in global_ENV.keys():
-        fn_obj = global_ENV[fn]
-        fn_obj.emit()
-        # fn_obj.body[1].second[0].eval()
-        # for stmt in fn_obj.body:
-        #     # print stmt.istype, stmt.first, stmt.second
-        #     # stmt.emit_assign_expr()
-        #     stmt.emit()
-        #     stmt.eval()
-
-
 def main():
     global tokens
-    # f = open(sys.argv[1])
-    # lines = f.read()
-    # f.close()
+
+    # Build the lexer from the PLYex file
+    lexer = PLYex.lexer
+
+    # # Give the lexer some input - from sys.argv[1]
+    infile = open(sys.argv[1])
+    indata = infile.read()
     
-    # print lines
-    # tokens = lines.replace(';',' ; ').split()
+    # # Pass data from input file to lexer to tokenize input    
+    lexer.input(indata)
+    while True:
+        tok = lexer.token()
+        if not tok: break      # No more input
+        tokens.append(tok)
 
-    # for item in range(len(tokenlist)):
-        # # appends ONLY list of values
-        # tokens.append(tokenlist[item].value)
+    # print "HERE ARE MY TOKENS:", tokens         #check tokens list
 
-    print "HERE ARE MY TOKENS:", tokens         #check tokens list
+    if len(sys.argv) == 3:
+        filename = sys.argv[1]
+        base_file = filename.split(".")[0]
+        
+        if sys.argv[2] == "--out":
+            # Use sys.stdout to write evaluation to a file
+            # os.remove("%s.out"%base_file)
+            sys.stdout = open("%s.out"%base_file, "w")
+            
+            # Parsing!!!
+            program = parse_program() 
+            program.eval({})
+            sys.stdout.close()
 
-    program = parse_program() 
-    program.eval({})
-    # program.eval(global_ENV)
-    print global_ENV.keys()
+        if sys.argv[2] == "--asm":
+            # Parsing to ASM file            
+            # os.remove("%s.asm"%base_file)
+            sys.stdout = open("%s.asm"%base_file, "w")
+            print "; --------------------------"
+            print "; %s.asm" %base_file
+            print "; ASM from JU language"
+            print "; --------------------------"
+            print "SECTION .data"
+            program = parse_program()
+            program.asm({})
+            footer = '''SECTION .text
+            global  start
+
+            start:
+                mov     rdi, msg
+                mov     rax, rdi
+            .nextchar:
+                cmp     byte [rax], 0
+                jz      .finished
+                inc     rax
+                jmp     .nextchar
+            .finished:
+                sub     rax, rdi
+                mov     rdx, rax
+                mov     rsi, msg
+                mov     rdi, 1
+                mov     rax, 0x2000004
+                syscall
+                mov     rdi, 0
+                mov     rax, 0x2000001
+                syscall'''
+            print footer
+            sys.stdout.close()
+    else:
+        # Parsing!!! and eval to terminal
+        program = parse_program() 
+        program.eval({})
+
+    # print global_ENV.keys()
+
 
 if __name__ == "__main__":
     main()
