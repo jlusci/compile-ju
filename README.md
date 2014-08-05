@@ -28,5 +28,5 @@ You may have noticed some similarities between JU and Python and Javascript. Thi
  
 ## Let the compiling begin:
 The main components of my compiler consists of a lexer and a parser. Here I will go through the main features of each.
-# Lexing:
-To create the token stream from your input program, the lexer uses the Python module PLY. 
+### Lexing:
+To create the token stream from your input program, the lexer uses the Python module PLY (Python Lex-Yacc) in PLYex.py file. The way the lexing works is by giving PLY  
