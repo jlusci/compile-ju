@@ -1,7 +1,7 @@
 Compile - JU
 ==========
 
-A compiler for my language, JU! 
+A compiler for my language, JU, including a web interface to demonstrate the evaluation.
 
 ## Quick start with "Hello, world!":
 * Main python lexer and parser: PLYex.py and drjb_parser.py * 
@@ -19,9 +19,14 @@ You may have noticed some similarities between JU and Python and Javascript. Thi
 * define functions: function main(){ \<block\> }
 * declare variables: var y = 2;
      (in place of 2 you can also define strings, ints, floats, math expressions, lists, and dictionaries)
-* reassign variables: y = y + 1;
+* reassign variables (preserving math order of operations): y = y + 1;
 * call functions previously defined with parameters: new\_fun(2);
 * if statements: if ( \<expression\> ) { \<block\> } else { \<block\> }
 * for loops: for(\<var\_def\>; \<expression\>; \<var\_assign\> ) { \<block\> }
 * while loops: while( \<expression\> ) { \<block\> }
 * print statements: print \<expression\>
+ 
+## Let the compiling begin:
+The main components of my compiler consists of a lexer and a parser. Here I will go through the main features of each.
+# Lexing:
+To create the token stream from your input program, the lexer uses the Python module PLY. 
