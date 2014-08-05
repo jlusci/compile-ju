@@ -16,19 +16,12 @@ Congrats! You have compiled your first JU program! Now let's go through how it a
 ## Syntax and grammar rules for JU language:
 You may have noticed some similarities between JU and Python and Javascript. This is no accident! I took parts of both languages that I liked and mashed them together. Here is an easy guide with examples to how to create your code. Note that all expressions must end with a semicolon.
 
-* define functions: 
-	function main(){ <block> }
+* define functions: function main(){ \<block\> }
 * declare variables: var y = 2;
      (in place of 2 you can also define strings, ints, floats, math expressions, lists, and dictionaries)
 * reassign variables: y = y + 1;
-* call functions previously defined with parameters: new_fun(2);
-* if statements: 
-	if ( <expression> ) { <block> } else { <block> }
-	
-* for loops: 
-	for(<var_def >; <expression>; <var_assign> ) { <block> }
-	
-* while loops: 
-	while( <expression> ) { <block> }
-	
-* print statements: print <expression>
+* call functions previously defined with parameters: new\_fun(2);
+* if statements: if ( \<expression\> ) { \<block\> } else { \<block\> }
+* for loops: for(\<var\_def\>; \<expression\>; \<var\_assign\> ) { \<block\> }
+* while loops: while( \<expression\> ) { \<block\> }
+* print statements: print \<expression\>
