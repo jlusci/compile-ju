@@ -2,7 +2,7 @@
 # PLYex.py
 #
 # new tokenizer that uses PLY for lexing instead of splitting 
-# on whitespace - will use in combination with drjb_parser.py
+# on whitespace - use from drjb_parser.py and ju_webapp_parser.py
 # ------------------------------------------------------------
 import ply.lex as lex
 import sys
@@ -115,7 +115,7 @@ def t_newline(t):
     t.lexer.lineno += len(t.value)
 
 # A string containing ignored characters (spaces and tabs)
-t_ignore  = ' \t'
+t_ignore  = ' \r\t'
 
 # Error handling rule
 def t_error(t):
@@ -123,35 +123,30 @@ def t_error(t):
     t.lexer.skip(1)
 
 # Build the lexer
-#lexer = lex.lex(optimize=1,lextab="test1") #builds lexer and file 
-#"test1" containing all regular expressions, disables most error checking
-# lexer = lex.lex(debug=1)  #debug on
+# lexer = lex.lex(optimize=1,lextab="test1")   #builds lexer and file 
+# lexer = lex.lex(debug=1)                     #debug on
 lexer = lex.lex()
 
-# Test it out
-data = '''
-3 + 4 * 10 ("hello there") 
-for (var x = 10) {
-  'hello';
-}
-// here is a comment
-  + -20 *2;
-'''
 
+# *********************************************
+# moved lexical analysis to parser file
+# *********************************************
 # Give the lexer some input - from sys.argv[1]
-infile = open(sys.argv[1])
-infile = infile.read()
-lexer.input(infile)
+# infile = open(sys.argv[1])
+# filename = sys.argv[1]
 
-# use the following for testing
-# lexer.input(data)
+# # From webapp
+# infile = open("test.ju")
+# filename = "test.ju"
+ 
+# infile = infile.read()
+# lexer.input(infile)
 
-# Tokenize
-while True:
-    tok = lexer.token()
-    if not tok: break      # No more input
-    # print tok.type, tok.value, tok.lineno, tok.lexpos
-    tokenlist.append(tok)
+# while True:
+#     tok = lexer.token()
+#     if not tok: break      # No more input
+#     tokenlist.append(tok)
+
 
 # lex.py comes with a simple main function - use this to get tuples list
 # if __name__ == '__main__':
