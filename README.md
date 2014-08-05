@@ -4,7 +4,8 @@ Compile - JU
 A compiler for my language, JU! 
 
 ## Quick start with "Hello, world!":
-* Main python lexer and parser: PLYex.py and drjb_parser.py * Input JU files include the .ju extension
+* Main python lexer and parser: PLYex.py and drjb_parser.py * 
+* Input JU files include the .ju extension
 
 To run and evaluate the compiler, first clone the repo, navigate to the main directory and type the following into the terminal:
 
