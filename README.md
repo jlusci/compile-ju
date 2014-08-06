@@ -40,5 +40,5 @@ My JU language is parsed using a technique called recursive descent. This is a t
 My compiler includes an interpreter that evaluates the AST recursively, starting with the top program node. This was implemented to ensure that the parsing techniques were producing what was expected through the JU language as an intermediate step in the compilation process. My parser and evaluation maintain proper scoping rules inside of different functions and function calls of previously defined functions. No variables exist outside of their defined scope. Currently, the evaluation process can occur the following ways:
 1. Directly to the terminal, as before with the hello.ju example: python drjb_parser.py hello.ju
 2. To an output file with a .out extension: python drjb_parser.py hello.ju --out
-3. To a template assembly file with a .asm extension: python drjb_parser.py hello.ju --asm (NOTE - will be fully implemented for other input .ju files in the future)
+3. To a template assembly file with a .asm extension: python drjb_parser.py hello.ju --asm (NOTE - will be implemented for other input .ju files in the future)
 4. Through the webapp application (installation described below).
