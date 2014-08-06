@@ -41,7 +41,7 @@ def post_intext():
     with open("test.ju") as inf:
         infile = inf.readlines()
 
-    flash("Congrats! Your input JU code was evaluated successfully!")
+    # flash("Congrats! Your input JU code was evaluated successfully!")
 
     return render_template("eval.html", outtext=outtext, intext = infile)
 
