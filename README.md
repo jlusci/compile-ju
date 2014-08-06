@@ -4,7 +4,7 @@ Compile - JU
 A compiler for my language, JU, including a web interface to demonstrate the evaluation.
 
 ## Quick start with "Hello, world!":
-* Main python lexer and parser: PLYex.py and drjb_parser.py * 
+* Main python lexer and parser: PLYex.py and drjb_parser.py (note - you must make sure you have the ply.lex python module installed) 
 * Input JU files include the .ju extension
 
 To run and evaluate the compiler, first clone the repo, navigate to the main directory and type the following into the terminal:
@@ -29,4 +29,5 @@ You may have noticed some similarities between JU and Python and Javascript. Thi
 ## Let the compiling begin:
 The main components of my compiler consists of a lexer and a parser. Here I will go through the main features of each.
 ### Lexing:
-To create the token stream from your input program, the lexer uses the Python module PLY (Python Lex-Yacc) in PLYex.py file. The way the lexing works is by giving PLY  
+Any language is made up of "tokens" where a token can be thought of as the smallest individual unit of your language. Lexical analysis involves scanning through an input script and recognizing these tokens. To create the token stream from your input program, the lexer uses the Python module PLY (Python Lex-Yacc) in PLYex.py file. In PLYex.py, the token names and reserved words for the language are defined and the lexer is built. The special characters are defined using regular expressions and all of the functions starting with 't\_' indicate tokens where special action is taken. For example, in the JU language, comments are defined the same way they are in JavaScript by the token '\\' and I have written a function in PLYex.py that looks for this special token and discards it when it is found, since comments are not a part of the functionality of the input file. Once your tokens and any special actions for your tokens are defined, you can then build the lexer using the lex() method in the PLY module.
+Once the lexer is built, the lexer is then able to read in your input script and tokenize it, creating token objects that carry information about the type and value of the token (as well as line number and character positions for error reporting). PLYex 
