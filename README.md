@@ -41,4 +41,4 @@ My compiler includes an interpreter that evaluates the AST recursively, starting
 1. Directly to the terminal, as before with the hello.ju example: python drjb_parser.py hello.ju
 2. To an output file with a .out extension: python drjb_parser.py hello.ju --out
 3. To a template assembly file with a .asm extension: python drjb_parser.py hello.ju --asm (NOTE - will be implemented for other input .ju files in the future)
-4. Through the webapp application (installation described below).
+4. Through the webapp application (installation and use described below).
