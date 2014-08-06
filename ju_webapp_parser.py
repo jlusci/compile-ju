@@ -706,7 +706,7 @@ def main():
     sys.stdout = open("%s.out"%base_file, "w")
 
     # Parsing!!!
-    program = parse_program() 
+    program = parse_program()   
     program.eval({})
     sys.stdout.close()
     # program.emit({})
