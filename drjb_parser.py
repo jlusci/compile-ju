@@ -1,6 +1,6 @@
 import sys
 import PLYex
-import os
+# import os
 import ply.lex as lex
 
 tokens = []
@@ -35,11 +35,11 @@ class ProgramNode(NodeTemplate):
             if fn.name == "main":
                 fn.eval(env)
 
-    def asm(self, env):        
-        # for fn in self.functions:
-        #     if fn.name == "main":
-        #         fn.eval(env)
-        print "msg     db      'Hello, world!', 0Ah"
+    def asm(self, env):
+        # fix asm emit in future implementation
+        print ";    asm body in future implementation"
+        print "    call quit"       
+        # print "msg     db      'Hello, world!', 0Ah"
 
 class FunctionNode(NodeTemplate):
     def __init__(self, name, params, body):
@@ -675,7 +675,7 @@ def main():
     if len(sys.argv) == 3:
         filename = sys.argv[1]
         base_file = filename.split(".")[0]
-        
+
         if sys.argv[2] == "--out":
             # Use sys.stdout to write evaluation to a file
             # os.remove("%s.out"%base_file)
@@ -689,36 +689,21 @@ def main():
         if sys.argv[2] == "--asm":
             # Parsing to ASM file            
             # os.remove("%s.asm"%base_file)
-            sys.stdout = open("%s.asm"%base_file, "w")
+            sys.stdout = open("./assembly/%s.asm"%base_file, "w")
             print "; --------------------------"
             print "; %s.asm" %base_file
             print "; ASM from JU language"
             print "; --------------------------"
-            print "SECTION .data"
+            print "%include 'functions.asm'"
+            print "SECTION .text"
+            print "global start"
+            print ""
+            print "start:"            
             program = parse_program()
             program.asm({})
-            footer = '''SECTION .text
-            global  start
-
-            start:
-                mov     rdi, msg
-                mov     rax, rdi
-            .nextchar:
-                cmp     byte [rax], 0
-                jz      .finished
-                inc     rax
-                jmp     .nextchar
-            .finished:
-                sub     rax, rdi
-                mov     rdx, rax
-                mov     rsi, msg
-                mov     rdi, 1
-                mov     rax, 0x2000004
-                syscall
-                mov     rdi, 0
-                mov     rax, 0x2000001
-                syscall'''
-            print footer
+            print "SECTION .data"
+            print ";    asm variables in future implementation"
+            # future implementation - put variable list here
             sys.stdout.close()
     else:
         # Parsing!!! and eval to terminal
