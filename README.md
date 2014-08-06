@@ -4,7 +4,7 @@ Compile - JU
 A compiler for my language, JU, including a web interface to demonstrate the evaluation.
 
 ## Quick start with "Hello, world!":
-* Main python lexer and parser: PLYex.py and drjb_parser.py (note - you must make sure you have the ply.lex python module installed) 
+* Main Python lexer and parser: PLYex.py and drjb_parser.py (note - you must make sure you have the ply.lex python module installed) 
 * Input JU files include the .ju extension
 
 To run and evaluate the compiler, first clone the repo, navigate to the main directory and type the following into the terminal:
@@ -14,7 +14,7 @@ To run and evaluate the compiler, first clone the repo, navigate to the main dir
 Congrats! You have compiled your first JU program! Now let's go through how it all works.
 
 ## Syntax and grammar rules for JU language:
-You may have noticed some similarities between JU and Python and Javascript. This is no accident! I took parts of both languages that I liked and mashed them together. Here is an easy guide with examples to how to create your code. Note that all expressions must end with a semicolon.
+You may have noticed some similarities between JU and Python and JavaScript. This is no accident! I took parts of both languages that I liked and mashed them together. Here is an easy guide with examples to how to create your code. Note that all expressions must end with a semicolon.
 
 * define functions: function main(){ \<block\> }
 * declare variables: var y = 2;
@@ -32,4 +32,6 @@ The main components of my compiler consists of a lexer and a parser. Here I will
 Any language is made up of "tokens" where a token can be thought of as the smallest individual unit of your language. Lexical analysis involves scanning through an input script and recognizing these tokens. To create the token stream from your input program, the lexer uses the Python module PLY (Python Lex-Yacc) in PLYex.py file. In PLYex.py, the token names and reserved words for the language are defined and the lexer is built. The special characters are defined using regular expressions and all of the functions starting with 't\_' indicate tokens where special action is taken. For example, in the JU language, comments are defined the same way they are in JavaScript by the token '\\' and I have written a function in PLYex.py that looks for this special token and discards it when it is found, since comments are not a part of the functionality of the input file. Once your tokens and any special actions for your tokens are defined, you can then build the lexer using the lex() method in the PLY module. Once the lexer is built, the lexer is then able to read in your input script and tokenize it, creating token objects that carry information about the type and value of the token (as well as line number and character positions for error reporting). PLYex then passes this token list to the parser, drjb_parser.py.
 
 ### Parsing:
-This is where the magic happens! The parsing step of compiling is where your program goes through to check to see that all of the rules of your language are being obeyed. The end result of this step is the creation of an abstract syntax tree that can then be evaluated (at the interpreter stage) or compiled through to assembly code. 
+This is where the magic happens! During the parsing step, the compiler checks your code to ensure that all language syntactical rules have been obeyed. The end result of this step is the creation of the abstract syntax tree representation of your JU program which can then be evaluated (in Python at the interpreter stage) or compiled through to assembly code. Let's look in more detail at the parsing process.
+
+My JU language is parsed using a technique called recursive descent. This is a top-down process that relies on mutually recursive functions where each one parses a specific grammar rule. Traditionally, it is difficult to preserve order of operations using recursive descent processes and many techniques exist where such precedence is preserved. The technique that I implemented is what is known as a "classic" solution. In this method, order of precedence is defined through recursive calls to the parsing functions, starting with parse\_expression()
