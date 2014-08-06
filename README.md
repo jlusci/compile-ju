@@ -43,3 +43,6 @@ My compiler includes an interpreter that evaluates the AST recursively, starting
 2. To an output file with a .out extension: python drjb_parser.py hello.ju --out
 3. To a template assembly file with a .asm extension: python drjb_parser.py hello.ju --asm (NOTE - will be implemented for other input .ju files in the future)
 4. Through the webapp application (installation and use described soon).
+
+![alt text](https://github.com/jlusci/compile-ju/blob/master/main_screen.png "Main Screen")
+![alt text](https://github.com/jlusci/compile-ju/blob/master/eval_screen.png "Eval Screen")
