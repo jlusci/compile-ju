@@ -10,8 +10,8 @@ A compiler for my language, JU, including a web interface to demonstrate the eva
 To run and evaluate the compiler, first clone the repo, navigate to the main directory and type the following into the terminal:
 
 	python drjb_parser.py hello.ju 
-	(or any other .ju file if you are bored with "Hello, world!")
-Congrats! You have compiled your first JU program! Now let's go through how it all works.
+	
+Congrats! You have compiled your first JU program! (if you are bored with "Hello, world!", feel free to try any other .ju file). Now let's go through how it all works.
 
 ## Syntax and grammar rules for JU language:
 You may have noticed some similarities between JU and Python and JavaScript. This is no accident! I took parts of both languages that I liked and mashed them together. Here is an easy guide with examples to how to create your code. Note that expressions must end with a semicolon.
