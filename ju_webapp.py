@@ -26,7 +26,7 @@ def post_intext():
     intext = intext.encode('utf-8')
 
     # # Remove old test.ju file and write new data from user to file
-    os.remove("test.ju")
+    # os.remove("test.ju")
     with open("test.ju","w") as f:
         f.write(intext)
 

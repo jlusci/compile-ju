@@ -702,7 +702,7 @@ def main():
     # Use sys.stdout to write evaluation from webapp to a file
     filename = "test.ju"
     base_file = filename.split(".")[0]
-    os.remove("%s.out"%base_file)
+    # os.remove("%s.out"%base_file)
     sys.stdout = open("%s.out"%base_file, "w")
 
     # Parsing!!!
