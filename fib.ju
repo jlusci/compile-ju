@@ -11,5 +11,8 @@ function fib(n) {
 }
 
 function main() {
-	fib(10000);
+	print "*********************************************************";
+    print "Here are the first 20 terms in the Fibonacci sequence";
+    fib(20);
+    print "*********************************************************";
 }
