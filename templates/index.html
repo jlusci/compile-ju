@@ -1,34 +1,31 @@
 {% extends 'base.html' %}
 {% block body %}
 
-<h2>Welcome to the pretty (functional) interface for my language. Type the script that you would like to evaluate into the box on the left and hit submit when you are ready to interpret!</h2>
-	<h4>
-	<div id="allinput">
-		<!-- <div id="div1"> -->
-			<form method="POST" action="">
-        		<p><label></label> <textarea name="intext" rows="20" cols="50" placeholder="Enter script to interpret here." autofocus></textarea></p>
-        		<p><button name="sub_button" type="submit">Submit!</button></p>
-<!--         	<p><button name="inter_button">Interpret</button><p>
-        		<p><button name="asm_button">Show me ASM!</button><p> -->
+<div id="mainbox">
+    <h1>A pretty (functional) web interface for the JU Programming Language.</h1>
+    <p>Would you like to say hello? Play some fizzbuzz? Create an address book? Go ahead, give it a try!</p>
+    <div id="codebox">
+        <div class="left" >
+            <form method="POST" action="">
+        		<textarea name="intext" id="codeinput" placeholder="Enter script to interpret here." autofocus></textarea>
+                <p></p>
+        		<button name="sub_button" type="submit">Evaluate</button>
     		</form>
     	</div>
-<!--     	<div id="div2">
-    		<form action"">
-    			<p><label></label><textarea name="outtext" rows="20" cols="60" placeholder="Evaluated script goes here." autofocus></textarea></p>
-			</form>
-		</div> -->
+        <div class="right">
+            <h4>Basic syntax rules for the JU language:</h4>
+            <li>Leading white space is irrelevant</li>
+            <li>Use semicolons to end expressions</li>
+            <li>To define functions: function main(){ [block] }</li>
+            <li>To declare variables: var y = 2;</li>
+            <ul><li>     (in place of 2 you can also define strings, ints, floats, math expressions, lists, and dictionaries)</li></ul>
+            <li>To reassign variables: y = y + 1;</li>
+            <li>To call functions previously defined with parameters: new_fun(2);</li>
+            <li>To create if statements: if ( [expression] ) { [block] } else { [block] }</li>
+            <li>To create for loops: for([var_def]; [expression]; [var_assign] ) { [block] }</li>
+            <li>To create while loops: while( [expression] ) { [block] }</li>
+            <li>To print: print [expression];</li>
+        </div>
+    </div>
 </div>
-
-<script type="text/javascript">
-
-function clearContents(element) {
-  element.value = '';
-}
-
-$(main);
-
-</script>
-
-
-
 {% endblock %}
